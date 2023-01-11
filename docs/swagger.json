@@ -1,0 +1,334 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Api para OnBoarding y validación de identidad de una persona",
+        "title": "Check ID",
+        "termsOfService": "https://www.bjungle.net/terms/",
+        "contact": {
+            "name": "API Support",
+            "email": "info@bjungle.net"
+        },
+        "license": {
+            "name": "Software Owner",
+            "url": "https://www.bjungle.net/terms/licenses"
+        },
+        "version": "1.2"
+    },
+    "host": "http://127.0.0.1:50050",
+    "basePath": "/",
+    "paths": {
+        "/api/v1/traceability/user-session/{userID}": {
+            "get": {
+                "description": "Método para obtener la trazabilidad registrada para el proceso de verificación de identidad",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Traceability"
+                ],
+                "summary": "Obtención de los datos de trazabilidad",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID del usuario",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseValidateUser"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/user-session/{email}": {
+            "get": {
+                "description": "Método para el obtener la información del usuario en sesión",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Obtiene los datos registrados del usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Correo electrónico del usuario",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.resGetUserSession"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/validate-identity": {
+            "post": {
+                "description": "Método para el registro de los datos para la validación de identidad de una persona",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Registro de validación de identidad",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "request of validate user identity",
+                        "name": "validateIdentity",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.requestValidateIdentity"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseValidateUser"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "users.UserValidation": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "type": "integer"
+                },
+                "back_document_img": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "civil_status": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "department": {
+                    "type": "string"
+                },
+                "document_number": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expedition_date": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "first_surname": {
+                    "type": "string"
+                },
+                "front_document_img": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "second_name": {
+                    "type": "string"
+                },
+                "second_surname": {
+                    "type": "string"
+                },
+                "selfie_img": {
+                    "type": "string"
+                },
+                "transaction_id": {
+                    "type": "string"
+                },
+                "type_document": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.requestValidateIdentity": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "type": "integer"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "civil_status": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "department": {
+                    "type": "string"
+                },
+                "document_back_img": {
+                    "type": "string"
+                },
+                "document_front_img": {
+                    "type": "string"
+                },
+                "document_number": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expedition_date": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "first_surname": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string"
+                },
+                "second_name": {
+                    "type": "string"
+                },
+                "second_surname": {
+                    "type": "string"
+                },
+                "selfie_img": {
+                    "type": "string"
+                },
+                "type_document": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.resGetUserSession": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/users.UserValidation"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.responseValidateUser": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "description": "Métodos referentes al usuario",
+            "name": "User"
+        },
+        {
+            "description": "Métodos referentes a la trazabilidad",
+            "name": "Traceability"
+        }
+    ]
+}

@@ -1,0 +1,223 @@
+basePath: /
+definitions:
+  users.UserValidation:
+    properties:
+      age:
+        type: integer
+      back_document_img:
+        type: string
+      birth_date:
+        type: string
+      city:
+        type: string
+      civil_status:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      department:
+        type: string
+      document_number:
+        type: integer
+      email:
+        type: string
+      expedition_date:
+        type: string
+      first_name:
+        type: string
+      first_surname:
+        type: string
+      front_document_img:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      nationality:
+        type: string
+      role:
+        type: string
+      second_name:
+        type: string
+      second_surname:
+        type: string
+      selfie_img:
+        type: string
+      transaction_id:
+        type: string
+      type_document:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  users.requestValidateIdentity:
+    properties:
+      age:
+        type: integer
+      birth_date:
+        type: string
+      city:
+        type: string
+      civil_status:
+        type: string
+      country:
+        type: string
+      department:
+        type: string
+      document_back_img:
+        type: string
+      document_front_img:
+        type: string
+      document_number:
+        type: integer
+      email:
+        type: string
+      expedition_date:
+        type: string
+      first_name:
+        type: string
+      first_surname:
+        type: string
+      gender:
+        type: string
+      nationality:
+        type: string
+      second_name:
+        type: string
+      second_surname:
+        type: string
+      selfie_img:
+        type: string
+      type_document:
+        type: string
+    type: object
+  users.resGetUserSession:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/users.UserValidation'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  users.responseValidateUser:
+    properties:
+      code:
+        type: integer
+      data:
+        type: string
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+host: http://127.0.0.1:50050
+info:
+  contact:
+    email: info@bjungle.net
+    name: API Support
+  description: Api para OnBoarding y validación de identidad de una persona
+  license:
+    name: Software Owner
+    url: https://www.bjungle.net/terms/licenses
+  termsOfService: https://www.bjungle.net/terms/
+  title: Check ID
+  version: "1.2"
+paths:
+  /api/v1/traceability/user-session/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Método para obtener la trazabilidad registrada para el proceso
+        de verificación de identidad
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID del usuario
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseValidateUser'
+      summary: Obtención de los datos de trazabilidad
+      tags:
+      - Traceability
+  /api/v1/user/user-session/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Método para el obtener la información del usuario en sesión
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Correo electrónico del usuario
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.resGetUserSession'
+      summary: Obtiene los datos registrados del usuario
+      tags:
+      - User
+  /api/v1/user/validate-identity:
+    post:
+      consumes:
+      - application/json
+      description: Método para el registro de los datos para la validación de identidad
+        de una persona
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: request of validate user identity
+        in: body
+        name: validateIdentity
+        required: true
+        schema:
+          $ref: '#/definitions/users.requestValidateIdentity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseValidateUser'
+      summary: Registro de validación de identidad
+      tags:
+      - User
+swagger: "2.0"
+tags:
+- description: Métodos referentes al usuario
+  name: User
+- description: Métodos referentes a la trazabilidad
+  name: Traceability
