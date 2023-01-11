@@ -1,4 +1,4 @@
-package users
+package traceability
 
 import (
 	"check-id-api/internal/logger"
@@ -22,7 +22,7 @@ type handlerTraceability struct {
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param userID path string true "ID del usuario"
-// @Success 200 {object} responseValidateUser
+// @Success 200 {object} resTraceability
 // @Router /api/v1/traceability/user-session/{userID} [get]
 func (h *handlerTraceability) getTraceabilitySession(c *fiber.Ctx) error {
 	res := resTraceability{Error: true}

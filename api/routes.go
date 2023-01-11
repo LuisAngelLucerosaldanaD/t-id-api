@@ -1,8 +1,9 @@
 package api
 
 import (
-	users2 "check-id-api/api/handlers/traceability"
+	"check-id-api/api/handlers/traceability"
 	"check-id-api/api/handlers/users"
+	_ "check-id-api/docs"
 	"github.com/ansrivas/fiberprometheus/v2"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
@@ -45,5 +46,5 @@ func routes(db *sqlx.DB, loggerHttp bool, allowedOrigins string) *fiber.App {
 
 func loadRoutes(app *fiber.App, db *sqlx.DB, TxID string) {
 	users.RouterUser(app, db, TxID)
-	users2.RouterTraceability(app, db, TxID)
+	traceability.RouterTraceability(app, db, TxID)
 }

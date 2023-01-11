@@ -1,5 +1,20 @@
 basePath: /
 definitions:
+  traceability.Traceability:
+    properties:
+      action:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   users.UserValidation:
     properties:
       age:
@@ -105,6 +120,21 @@ definitions:
       type:
         type: integer
     type: object
+  users.resTraceability:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/traceability.Traceability'
+        type: array
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
   users.responseValidateUser:
     properties:
       code:
@@ -155,7 +185,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/users.responseValidateUser'
+            $ref: '#/definitions/users.resTraceability'
       summary: Obtención de los datos de trazabilidad
       tags:
       - Traceability

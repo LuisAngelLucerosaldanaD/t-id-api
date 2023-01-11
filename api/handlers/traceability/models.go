@@ -1,4 +1,4 @@
-package users
+package traceability
 
 import "check-id-api/pkg/trx/traceability"
 

@@ -58,7 +58,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseValidateUser"
+                            "$ref": "#/definitions/users.resTraceability"
                         }
                     }
                 }
@@ -148,6 +148,29 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "traceability.Traceability": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "users.UserValidation": {
             "type": "object",
             "properties": {
@@ -295,6 +318,29 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/users.UserValidation"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.resTraceability": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/traceability.Traceability"
+                    }
                 },
                 "error": {
                     "type": "boolean"
