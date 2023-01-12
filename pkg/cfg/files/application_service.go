@@ -15,6 +15,7 @@ type PortsServerFiles interface {
 	GetFilesByID(id int64) (*Files, int, error)
 	GetAllFiles() ([]*Files, error)
 	GetFilesByUserID(userId string) ([]*Files, int, error)
+	DeleteFilesByUserID(userId string) (int, error)
 }
 
 type service struct {
@@ -105,4 +106,19 @@ func (s *service) GetFilesByUserID(userId string) ([]*Files, int, error) {
 		return nil, 22, err
 	}
 	return m, 29, nil
+}
+
+func (s *service) DeleteFilesByUserID(userId string) (int, error) {
+	if !govalidator.IsUUID(userId) {
+		logger.Error.Println(s.txID, " - don't meet validations:", fmt.Errorf("userId isn't uuid"))
+		return 15, fmt.Errorf("userId isn't uuid")
+	}
+	if err := s.repository.deleteByUserId(userId); err != nil {
+		if err.Error() == "ecatch:108" {
+			return 108, nil
+		}
+		logger.Error.Println(s.txID, " - couldn't delete row:", err)
+		return 20, err
+	}
+	return 28, nil
 }

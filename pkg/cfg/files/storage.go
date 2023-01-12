@@ -18,6 +18,7 @@ type ServicesFilesRepository interface {
 	getByID(id int64) (*Files, error)
 	getAll() ([]*Files, error)
 	getByUserID(userID string) ([]*Files, error)
+	deleteByUserId(userId string) error
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesFilesRepository {

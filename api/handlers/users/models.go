@@ -68,7 +68,6 @@ type UserValidation struct {
 	FirstSurname     string    `json:"first_surname"`
 	BirthDate        time.Time `json:"birth_date"`
 	Country          string    `json:"country"`
-	Role             string    `json:"role"`
 	TransactionId    string    `json:"transaction_id"`
 	Department       string    `json:"department"`
 	City             string    `json:"city"`

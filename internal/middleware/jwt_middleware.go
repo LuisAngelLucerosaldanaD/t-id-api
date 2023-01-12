@@ -3,7 +3,6 @@ package middleware
 import (
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
-	"check-id-api/internal/models"
 	"crypto/rsa"
 	"os"
 
@@ -20,13 +19,6 @@ var (
 type TokenMetadata struct {
 	Expires int64
 	Ip      string
-}
-
-// JWT personzalizado
-type jwtCustomClaims struct {
-	User      *models.User `json:"user"`
-	IPAddress string       `json:"ip_address"`
-	jwt.StandardClaims
 }
 
 // init lee los archivos de firma y validación RSA

@@ -6,19 +6,21 @@ import (
 	"os"
 )
 
-// @title Check ID
-// @version 1.2
+// @title Check ID OnBoarding
+// @version 1.3
 // @description Api para OnBoarding y validación de identidad de una persona
 // @termsOfService https://www.bjungle.net/terms/
 // @contact.name API Support
-// @contact.email info@bjungle.net
+// @contact.email luis.lucero@bjungle.net
 // @license.name Software Owner
 // @license.url https://www.bjungle.net/terms/licenses
-// @host http://127.0.0.1:50050
+// @host http://172.147.77.149:50050
 // @tag.name User
 // @tag.description Métodos referentes al usuario
 // @tag.name Traceability
 // @tag.description Métodos referentes a la trazabilidad
+// @tag.name Work
+// @tag.description Métodos referentes al trabajo registrado
 // @BasePath /
 func main() {
 	c := env.NewConfiguration()

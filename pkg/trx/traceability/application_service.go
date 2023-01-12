@@ -9,12 +9,13 @@ import (
 )
 
 type PortsServerTraceability interface {
-	CreateTraceability(action string, description string, userId string) (*Traceability, int, error)
-	UpdateTraceability(id int64, action string, description string, userId string) (*Traceability, int, error)
+	CreateTraceability(action string, typeTrx string, description string, userId string) (*Traceability, int, error)
+	UpdateTraceability(id int64, action string, typeTrx string, description string, userId string) (*Traceability, int, error)
 	DeleteTraceability(id int64) (int, error)
 	GetTraceabilityByID(id int64) (*Traceability, int, error)
 	GetAllTraceability() ([]*Traceability, error)
 	GetTraceabilityByUserID(userId string) ([]*Traceability, int, error)
+	DeleteTraceabilityByUserID(userId string) (int, error)
 }
 
 type service struct {
@@ -27,8 +28,8 @@ func NewTraceabilityService(repository ServicesTraceabilityRepository, user *mod
 	return &service{repository: repository, user: user, txID: TxID}
 }
 
-func (s *service) CreateTraceability(action string, description string, userId string) (*Traceability, int, error) {
-	m := NewCreateTraceability(action, description, userId)
+func (s *service) CreateTraceability(action string, typeTrx string, description string, userId string) (*Traceability, int, error) {
+	m := NewCreateTraceability(action, typeTrx, description, userId)
 	if valid, err := m.valid(); !valid {
 		logger.Error.Println(s.txID, " - don't meet validations:", err)
 		return m, 15, err
@@ -44,8 +45,8 @@ func (s *service) CreateTraceability(action string, description string, userId s
 	return m, 29, nil
 }
 
-func (s *service) UpdateTraceability(id int64, action string, description string, userId string) (*Traceability, int, error) {
-	m := NewTraceability(id, action, description, userId)
+func (s *service) UpdateTraceability(id int64, action string, typeTrx string, description string, userId string) (*Traceability, int, error) {
+	m := NewTraceability(id, action, typeTrx, description, userId)
 	if id == 0 {
 		logger.Error.Println(s.txID, " - don't meet validations:", fmt.Errorf("id is required"))
 		return m, 15, fmt.Errorf("id is required")
@@ -105,4 +106,19 @@ func (s *service) GetTraceabilityByUserID(userId string) ([]*Traceability, int, 
 		return nil, 22, err
 	}
 	return m, 29, nil
+}
+
+func (s *service) DeleteTraceabilityByUserID(userId string) (int, error) {
+	if !govalidator.IsUUID(userId) {
+		logger.Error.Println(s.txID, " - don't meet validations:", fmt.Errorf("userId isn't uuid"))
+		return 15, fmt.Errorf("userId isn't uuid")
+	}
+	if err := s.repository.deleteByUserID(userId); err != nil {
+		if err.Error() == "ecatch:108" {
+			return 108, nil
+		}
+		logger.Error.Println(s.txID, " - couldn't delete row:", err)
+		return 20, err
+	}
+	return 28, nil
 }

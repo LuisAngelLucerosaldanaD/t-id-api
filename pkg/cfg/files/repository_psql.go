@@ -115,3 +115,17 @@ func (s *psql) getByUserID(userID string) ([]*Files, error) {
 	}
 	return ms, nil
 }
+
+// Delete elimina un registro de la BD
+func (s *psql) deleteByUserId(userId string) error {
+	const psqlDelete = `DELETE FROM cfg.files WHERE user_id = :user_id `
+	m := Files{UserId: userId}
+	rs, err := s.DB.NamedExec(psqlDelete, &m)
+	if err != nil {
+		return err
+	}
+	if i, _ := rs.RowsAffected(); i == 0 {
+		return fmt.Errorf("ecatch:108")
+	}
+	return nil
+}

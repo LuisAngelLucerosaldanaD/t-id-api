@@ -18,6 +18,7 @@ type ServicesTraceabilityRepository interface {
 	getByID(id int64) (*Traceability, error)
 	getAll() ([]*Traceability, error)
 	getByUserID(userId string) ([]*Traceability, error)
+	deleteByUserID(userId string) error
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesTraceabilityRepository {

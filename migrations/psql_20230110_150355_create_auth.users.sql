@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS auth.users(
     first_name VARCHAR (50) NOT NULL,
     second_name VARCHAR (50) ,
     second_surname VARCHAR (50) NOT NULL,
-    age CHANGE-THIS-TYPE  NOT NULL,
+    age int4  NOT NULL,
     gender VARCHAR (20) NOT NULL,
     nationality VARCHAR (50) NOT NULL,
     civil_status VARCHAR (50) NOT NULL,

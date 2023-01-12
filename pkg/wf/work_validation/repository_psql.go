@@ -1,4 +1,4 @@
-package roles
+package work_validation
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ type psql struct {
 	TxID string
 }
 
-func newRolesPsqlRepository(db *sqlx.DB, user *models.User, txID string) *psql {
+func newWorkValidationPsqlRepository(db *sqlx.DB, user *models.User, txID string) *psql {
 	return &psql{
 		DB:   db,
 		user: user,
@@ -25,26 +25,28 @@ func newRolesPsqlRepository(db *sqlx.DB, user *models.User, txID string) *psql {
 }
 
 // Create registra en la BD
-func (s *psql) create(m *Roles) error {
-	date := time.Now()
-	m.UpdatedAt = date
-	m.CreatedAt = date
-	const psqlInsert = `INSERT INTO auth.roles (id ,name, description, created_at, updated_at) VALUES (:id ,:name, :description,:created_at, :updated_at) `
-	rs, err := s.DB.NamedExec(psqlInsert, &m)
+func (s *psql) create(m *WorkValidation) error {
+	const psqlInsert = `INSERT INTO wf.work_validation (status, user_id) VALUES ($1, $2) RETURNING id, created_at, updated_at`
+	stmt, err := s.DB.Prepare(psqlInsert)
 	if err != nil {
 		return err
 	}
-	if i, _ := rs.RowsAffected(); i == 0 {
-		return fmt.Errorf("ecatch:108")
+	defer stmt.Close()
+	err = stmt.QueryRow(
+		m.Status,
+		m.UserId,
+	).Scan(&m.ID, &m.CreatedAt, &m.UpdatedAt)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 // Update actualiza un registro en la BD
-func (s *psql) update(m *Roles) error {
+func (s *psql) update(m *WorkValidation) error {
 	date := time.Now()
 	m.UpdatedAt = date
-	const psqlUpdate = `UPDATE auth.roles SET name = :name, description = :description, updated_at = :updated_at WHERE id = :id `
+	const psqlUpdate = `UPDATE wf.work_validation SET status = :status, user_id = :user_id, updated_at = :updated_at WHERE id = :id `
 	rs, err := s.DB.NamedExec(psqlUpdate, &m)
 	if err != nil {
 		return err
@@ -56,9 +58,9 @@ func (s *psql) update(m *Roles) error {
 }
 
 // Delete elimina un registro de la BD
-func (s *psql) delete(id string) error {
-	const psqlDelete = `DELETE FROM auth.roles WHERE id = :id `
-	m := Roles{ID: id}
+func (s *psql) delete(id int64) error {
+	const psqlDelete = `DELETE FROM wf.work_validation WHERE id = :id `
+	m := WorkValidation{ID: id}
 	rs, err := s.DB.NamedExec(psqlDelete, &m)
 	if err != nil {
 		return err
@@ -70,9 +72,9 @@ func (s *psql) delete(id string) error {
 }
 
 // GetByID consulta un registro por su ID
-func (s *psql) getByID(id string) (*Roles, error) {
-	const psqlGetByID = `SELECT id , name, description, created_at, updated_at FROM auth.roles WHERE id = $1 `
-	mdl := Roles{}
+func (s *psql) getByID(id int64) (*WorkValidation, error) {
+	const psqlGetByID = `SELECT id , status, user_id, created_at, updated_at FROM wf.work_validation WHERE id = $1 `
+	mdl := WorkValidation{}
 	err := s.DB.Get(&mdl, psqlGetByID, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -84,9 +86,9 @@ func (s *psql) getByID(id string) (*Roles, error) {
 }
 
 // GetAll consulta todos los registros de la BD
-func (s *psql) getAll() ([]*Roles, error) {
-	var ms []*Roles
-	const psqlGetAll = ` SELECT id , name, description, created_at, updated_at FROM auth.roles `
+func (s *psql) getAll() ([]*WorkValidation, error) {
+	var ms []*WorkValidation
+	const psqlGetAll = ` SELECT id , status, user_id, created_at, updated_at FROM wf.work_validation `
 
 	err := s.DB.Select(&ms, psqlGetAll)
 	if err != nil {

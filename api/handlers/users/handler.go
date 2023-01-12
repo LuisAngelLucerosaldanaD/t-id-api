@@ -6,6 +6,7 @@ import (
 	"check-id-api/pkg/auth"
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
+	"check-id-api/pkg/wf"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -34,11 +35,24 @@ func (h *handlerUser) validateIdentity(c *fiber.Ctx) error {
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
 	if err != nil {
 		logger.Error.Printf("couldn't bind model create wallets: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	resUsr, code, err := srvAuth.SrvUser.GetUsersByEmail(req.Email)
+	if err != nil {
+		logger.Error.Printf("couldn't create user, error validation user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if resUsr != nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(5, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -49,14 +63,7 @@ func (h *handlerUser) validateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvAuth.SrvUsersRol.CreateUsersRol(uuid.New().String(), user.ID, "")
-	if err != nil {
-		logger.Error.Printf("couldn't create relation user role, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Register", "Inicio de validación de identidad", user.ID)
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info", "Inicio de validación de identidad", user.ID)
 	if err != nil {
 		logger.Error.Printf("couldn't create traceability, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -108,6 +115,19 @@ func (h *handlerUser) validateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	_, code, err = srvWf.SrvWork.CreateWorkValidation("start", user.ID)
+	if err != nil {
+		_, _ = srvAuth.SrvUser.DeleteUsers(user.ID)
+		_, _ = srvTrx.SrvTraceability.DeleteTraceabilityByUserID(user.ID)
+		_, _ = srvCfg.SrvFiles.DeleteFilesByUserID(user.ID)
+		logger.Error.Printf("couldn't start work, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, _ = srvAuth.SrvUserTemp.DeleteUserTempByEmail(user.Email)
+
 	res.Data = "Datos registrados correctamente"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
@@ -146,13 +166,6 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 	if user == nil {
 		res.Error = false
 		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	role, code, err := srvAuth.SrvUsersRol.GetUsersRolByUserId(user.ID)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el rol del usuario, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -218,7 +231,6 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 		FirstSurname:     user.FirstSurname,
 		BirthDate:        user.BirthDate,
 		Country:          user.Country,
-		Role:             role.ID,
 		TransactionId:    transactionID,
 		Department:       user.Department,
 		City:             user.City,
