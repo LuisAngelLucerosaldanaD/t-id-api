@@ -12,7 +12,7 @@ const (
 )
 
 type ServicesFileDocumentsRepository interface {
-	upload(documentID int64, file *File) (*File, error)
+	upload(id string, file *File) (*File, error)
 	getFile(bucket, path, fileName string) (string, error)
 }
 

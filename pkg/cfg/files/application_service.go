@@ -16,6 +16,7 @@ type PortsServerFiles interface {
 	GetAllFiles() ([]*Files, error)
 	GetFilesByUserID(userId string) ([]*Files, int, error)
 	DeleteFilesByUserID(userId string) (int, error)
+	GetFilesByTypeAndUserID(typeFile int, userID string) (*Files, int, error)
 }
 
 type service struct {
@@ -121,4 +122,13 @@ func (s *service) DeleteFilesByUserID(userId string) (int, error) {
 		return 20, err
 	}
 	return 28, nil
+}
+
+func (s *service) GetFilesByTypeAndUserID(typeFile int, userID string) (*Files, int, error) {
+	m, err := s.repository.getByTypeAndUserID(typeFile, userID)
+	if err != nil {
+		logger.Error.Println(s.txID, " - couldn`t getByID row:", err)
+		return nil, 22, err
+	}
+	return m, 29, nil
 }

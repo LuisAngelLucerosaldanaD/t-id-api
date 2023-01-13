@@ -5,7 +5,7 @@ import (
 	"check-id-api/internal/logger"
 	"crypto/rsa"
 	"github.com/gofiber/fiber/v2"
-	jwtware "github.com/gofiber/jwt/v2"
+	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
 	"os"
 )
@@ -13,12 +13,6 @@ import (
 var (
 	verifyKey *rsa.PublicKey
 )
-
-// TokenMetadata struct to describe metadata in JWT.
-type TokenMetadata struct {
-	Expires int64
-	Ip      string
-}
 
 // init lee los archivos de firma y validación RSA
 func init() {

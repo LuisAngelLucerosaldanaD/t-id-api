@@ -129,3 +129,17 @@ func (s *psql) deleteByUserId(userId string) error {
 	}
 	return nil
 }
+
+// GetByID consulta un registro por su ID
+func (s *psql) getByTypeAndUserID(typeFile int, userID string) (*Files, error) {
+	const psqlGetByID = `SELECT id , path, name, type, user_id, created_at, updated_at FROM cfg.files WHERE type = $1 and user_id = $2`
+	mdl := Files{}
+	err := s.DB.Get(&mdl, psqlGetByID, typeFile, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return &mdl, err
+	}
+	return &mdl, nil
+}

@@ -19,21 +19,161 @@ type handlerUser struct {
 	TxID string
 }
 
-// validateIdentity godoc
-// @Summary Registro de validación de identidad
-// @Description Método para el registro de los datos para la validación de identidad de una persona
+// uploadSelfie godoc
+// @Summary Carga de selfie del usuario
+// @Description Método para cargar la selfie del usuario
 // @tags User
-// @Accept  json
-// @Produce  json
+// @Accept json
+// @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param validateIdentity body requestValidateIdentity true "request of validate user identity"
-// @Success 200 {object} responseValidateUser
-// @Router /api/v1/user/validate-identity [post]
-func (h *handlerUser) validateIdentity(c *fiber.Ctx) error {
-	res := responseValidateUser{Error: true}
+// @Param UploadSelfie body reqUploadSelfie true "Selfie del usuario"
+// @Success 200 {object} responseAnny
+// @Router /api/v1/user/upload-selfie [post]
+func (h *handlerUser) uploadSelfie(c *fiber.Ctx) error {
+	res := responseAnny{Error: true}
+	req := reqUploadSelfie{}
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileSelfie, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(1, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't get user file, error validation user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if fileSelfie != nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(5, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	f, err := srvCfg.SrvFilesS3.UploadFile(req.UserID, req.UserID+"_selfie.jpg", req.SelfieImg)
+	if err != nil {
+		logger.Error.Printf("couldn't upload file s3: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create selfie image, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Carga de Selfie", "info", "Carga de la imagen de Selfie", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Selfie cargada correctamente"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// uploadDocuments godoc
+// @Summary Carga del documento de identidad
+// @Description Método para cargar el documento de identidad
+// @tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param uploadDocument body reqUploadDocument true "Documento de identidad"
+// @Success 200 {object} responseAnny
+// @Router /api/v1/user/upload-documents [post]
+func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
+	res := responseAnny{Error: true}
+	req := reqUploadDocument{}
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileTemp, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(2, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't upload documents, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if fileTemp != nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(5, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	f, err := srvCfg.SrvFilesS3.UploadFile(req.UserID, req.UserID+"_doc_front.jpg", req.DocumentFrontImg)
+	if err != nil {
+		logger.Error.Printf("couldn't upload file document front to s3: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 2, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create file document front, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	f, err = srvCfg.SrvFilesS3.UploadFile(req.UserID, req.UserID+"_doc_back.jpg", req.DocumentBackImg)
+	if err != nil {
+		logger.Error.Printf("couldn't upload file document back to s3: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 3, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create file document back, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Carga del documento", "info", "Carga de documento de identidad", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Documento cargado correctamente"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// registerBasicInformation godoc
+// @Summary Registro de información básica
+// @Description Método para el registro de los datos basicos de una persona
+// @tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param BasicInformation body requestValidateIdentity true "request of validate user identity"
+// @Success 200 {object} responseAnny
+// @Router /api/v1/user/basic-information [post]
+func (h *handlerUser) registerBasicInformation(c *fiber.Ctx) error {
+	res := responseAnny{Error: true}
 	req := requestValidateIdentity{}
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
-	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
 	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 
@@ -44,74 +184,17 @@ func (h *handlerUser) validateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	resUsr, code, err := srvAuth.SrvUser.GetUsersByEmail(req.Email)
-	if err != nil {
-		logger.Error.Printf("couldn't create user, error validation user, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if resUsr != nil {
-		res.Code, res.Type, res.Msg = msg.GetByCode(5, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	user, code, err := srvAuth.SrvUser.CreateUsers(uuid.New().String(), req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, req.FirstName, req.SecondName, req.SecondSurname, req.Age, req.Gender, req.Nationality, req.CivilStatus, req.FirstSurname, req.BirthDate, req.Country, req.Department, req.City, c.IP())
+	user, code, err := srvAuth.SrvUser.UpdateUsers(uuid.New().String(), req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, req.FirstName, req.SecondName, req.SecondSurname, req.Age, req.Gender, req.Nationality, req.CivilStatus, req.FirstSurname, req.BirthDate, req.Country, req.Department, req.City, c.IP())
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info", "Inicio de validación de identidad", user.ID)
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info", "Registro de información básica", user.ID)
 	if err != nil {
 		logger.Error.Printf("couldn't create traceability, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	f, err := srvCfg.SrvFilesS3.UploadFile(req.DocumentNumber, strconv.FormatInt(req.DocumentNumber, 10)+"_selfie.jpg", req.SelfieImg)
-	if err != nil {
-		logger.Error.Printf("couldn't upload file s3: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't create selfie image, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		res.Msg = err.Error()
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	f, err = srvCfg.SrvFilesS3.UploadFile(req.DocumentNumber, strconv.FormatInt(req.DocumentNumber, 10)+"_doc_front.jpg", req.DocumentFrontImg)
-	if err != nil {
-		logger.Error.Printf("couldn't upload file document front to s3: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 2, user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't create file document front, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		res.Msg = err.Error()
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	f, err = srvCfg.SrvFilesS3.UploadFile(req.DocumentNumber, strconv.FormatInt(req.DocumentNumber, 10)+"_doc_back.jpg", req.DocumentBackImg)
-	if err != nil {
-		logger.Error.Printf("couldn't upload file document back to s3: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 3, user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't create file document back, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		res.Msg = err.Error()
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -119,14 +202,11 @@ func (h *handlerUser) validateIdentity(c *fiber.Ctx) error {
 	if err != nil {
 		_, _ = srvAuth.SrvUser.DeleteUsers(user.ID)
 		_, _ = srvTrx.SrvTraceability.DeleteTraceabilityByUserID(user.ID)
-		_, _ = srvCfg.SrvFiles.DeleteFilesByUserID(user.ID)
 		logger.Error.Printf("couldn't start work, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		res.Msg = err.Error()
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
-
-	_, _ = srvAuth.SrvUserTemp.DeleteUserTempByEmail(user.Email)
 
 	res.Data = "Datos registrados correctamente"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)

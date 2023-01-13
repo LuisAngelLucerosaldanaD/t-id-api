@@ -28,7 +28,7 @@ func newDocumentFileS3Repository(user *models.User, txID string) *s3 {
 	}
 }
 
-func (s *s3) upload(documentID int64, file *File) (*File, error) {
+func (s *s3) upload(id string, file *File) (*File, error) {
 	c := env.NewConfiguration()
 	var fullPath strings.Builder
 	if file.Encoding == "" || file.OriginalFile == "" {
@@ -43,7 +43,7 @@ func (s *s3) upload(documentID int64, file *File) (*File, error) {
 		return file, fmt.Errorf("couldn't create encoded file is null")
 	}
 	r := bytes.NewReader(fl)
-	file.Path, file.FileName = s.getFullPath(file.OriginalFile, documentID)
+	file.Path, file.FileName = s.getFullPath(file.OriginalFile, id)
 	fullPath.WriteString(file.Path)
 	fullPath.WriteString(file.FileName)
 	file.Hash = s.getHashFromFile(fl)
@@ -63,8 +63,8 @@ func (s *s3) getHashFromFile(file []byte) string {
 	return fmt.Sprintf("%x", h)
 }
 
-func (s *s3) getFullPath(originalFile string, documentID int64) (string, string) {
-	fPath := fmt.Sprintf("/%d/%d/%d/%d/%d/", documentID, time.Now().Year(), time.Now().YearDay(), time.Now().Hour(), time.Now().Minute())
+func (s *s3) getFullPath(originalFile string, id string) (string, string) {
+	fPath := fmt.Sprintf("/%s/%d/%d/%d/%d/", id, time.Now().Year(), time.Now().YearDay(), time.Now().Hour(), time.Now().Minute())
 	fileName := fmt.Sprintf("%s%s", uuid.New(), filepath.Ext(originalFile))
 	return fPath, fileName
 }

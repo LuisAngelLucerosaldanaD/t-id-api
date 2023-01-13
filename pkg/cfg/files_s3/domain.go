@@ -8,8 +8,7 @@ import (
 
 // File  Model struct File
 type File struct {
-	ID           int64     `json:"id" db:"id" valid:"-"`
-	IdDocument   int64     `json:"id_document" db:"id_document" valid:"required"`
+	ID           string    `json:"id" db:"id" valid:"-"`
 	OriginalFile string    `json:"original_file" db:"original_file" valid:"required"`
 	Hash         string    `json:"hash" db:"hash" valid:"required"`
 	FileSize     int       `json:"file_size" db:"file_size" valid:"required"`
@@ -30,9 +29,9 @@ type ResponseFile struct {
 	FileID       int    `json:"file_id"`
 }
 
-func NewUploadFile(idDocument int64, originalFile string, enconding string) *File {
+func NewUploadFile(id string, originalFile string, enconding string) *File {
 	return &File{
-		IdDocument:   idDocument,
+		ID:           id,
 		OriginalFile: originalFile,
 		Encoding:     enconding,
 	}
