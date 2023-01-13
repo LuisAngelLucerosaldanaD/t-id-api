@@ -2,6 +2,7 @@ package work_validation
 
 import (
 	"fmt"
+	"github.com/asaskevich/govalidator"
 
 	"check-id-api/internal/logger"
 	"check-id-api/internal/models"
@@ -13,6 +14,8 @@ type PortsServerWorkValidation interface {
 	DeleteWorkValidation(id int64) (int, error)
 	GetWorkValidationByID(id int64) (*WorkValidation, int, error)
 	GetAllWorkValidation() ([]*WorkValidation, error)
+	GetWorkValidationByUserId(userId string) (*WorkValidation, int, error)
+	GetAllWorkValidationByStatus(status string) ([]*WorkValidation, error)
 }
 
 type service struct {
@@ -90,4 +93,21 @@ func (s *service) GetWorkValidationByID(id int64) (*WorkValidation, int, error) 
 
 func (s *service) GetAllWorkValidation() ([]*WorkValidation, error) {
 	return s.repository.getAll()
+}
+
+func (s *service) GetWorkValidationByUserId(userId string) (*WorkValidation, int, error) {
+	if !govalidator.IsUUID(userId) {
+		logger.Error.Println(s.txID, " - don't meet validations:", fmt.Errorf("userId is not uuid"))
+		return nil, 15, fmt.Errorf("userId is not uuid")
+	}
+	m, err := s.repository.getByUserId(userId)
+	if err != nil {
+		logger.Error.Println(s.txID, " - couldn`t getByUserId row:", err)
+		return nil, 22, err
+	}
+	return m, 29, nil
+}
+
+func (s *service) GetAllWorkValidationByStatus(status string) ([]*WorkValidation, error) {
+	return s.repository.getByStatus(status)
 }

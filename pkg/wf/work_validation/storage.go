@@ -17,6 +17,8 @@ type ServicesWorkValidationRepository interface {
 	delete(id int64) error
 	getByID(id int64) (*WorkValidation, error)
 	getAll() ([]*WorkValidation, error)
+	getByUserId(userID string) (*WorkValidation, error)
+	getByStatus(status string) ([]*WorkValidation, error)
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesWorkValidationRepository {

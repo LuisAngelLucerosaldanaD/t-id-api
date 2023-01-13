@@ -74,3 +74,22 @@ type UserValidation struct {
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
+
+type resGetUsersLasted struct {
+	Error bool          `json:"error"`
+	Data  []*UserStatus `json:"data"`
+	Code  int           `json:"code"`
+	Type  int           `json:"type"`
+	Msg   string        `json:"msg"`
+}
+
+type UserStatus struct {
+	ID            string    `json:"id"`
+	Email         string    `json:"email"`
+	FirstName     string    `json:"first_name"`
+	SecondName    string    `json:"second_name"`
+	FirstSurname  string    `json:"first_surname"`
+	SecondSurname string    `json:"second_surname"`
+	Status        string    `json:"status"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}

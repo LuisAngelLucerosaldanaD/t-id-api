@@ -17,6 +17,7 @@ type ServicesUsersRepository interface {
 	getByID(id string) (*Users, error)
 	getAll() ([]*Users, error)
 	getByEmail(email string) (*Users, error)
+	getLasted(email string, limit, offset int) ([]*Users, error)
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesUsersRepository {

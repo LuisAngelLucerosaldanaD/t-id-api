@@ -99,3 +99,30 @@ func (s *psql) getAll() ([]*WorkValidation, error) {
 	}
 	return ms, nil
 }
+
+func (s *psql) getByUserId(userID string) (*WorkValidation, error) {
+	const psqlGetByID = `SELECT id , status, user_id, created_at, updated_at FROM wf.work_validation WHERE user_id = $1 `
+	mdl := WorkValidation{}
+	err := s.DB.Get(&mdl, psqlGetByID, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return &mdl, err
+	}
+	return &mdl, nil
+}
+
+func (s *psql) getByStatus(status string) ([]*WorkValidation, error) {
+	var ms []*WorkValidation
+	const psqlGetAll = ` SELECT id , status, user_id, created_at, updated_at FROM wf.work_validation where status = $1`
+
+	err := s.DB.Select(&ms, psqlGetAll, status)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return ms, err
+	}
+	return ms, nil
+}

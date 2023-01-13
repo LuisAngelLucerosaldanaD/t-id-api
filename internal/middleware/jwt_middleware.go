@@ -4,11 +4,10 @@ import (
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
 	"crypto/rsa"
-	"os"
-
-	"github.com/form3tech-oss/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v2"
+	"github.com/golang-jwt/jwt/v4"
+	"os"
 )
 
 var (

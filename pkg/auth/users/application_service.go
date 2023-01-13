@@ -16,6 +16,7 @@ type PortsServerUsers interface {
 	GetUsersByID(id string) (*Users, int, error)
 	GetAllUsers() ([]*Users, error)
 	GetUsersByEmail(email string) (*Users, int, error)
+	GetAllUsersLasted(email string, limit, offset int) ([]*Users, error)
 }
 
 type service struct {
@@ -102,4 +103,8 @@ func (s *service) GetUsersByEmail(email string) (*Users, int, error) {
 		return nil, 22, err
 	}
 	return m, 29, nil
+}
+
+func (s *service) GetAllUsersLasted(email string, limit, offset int) ([]*Users, error) {
+	return s.repository.getLasted(email, limit, offset)
 }

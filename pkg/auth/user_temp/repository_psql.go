@@ -113,7 +113,7 @@ func (s *psql) getByEmail(email string) (*UserTemp, error) {
 
 // Delete elimina un registro de la BD
 func (s *psql) deleteByEmail(email string) error {
-	const psqlDelete = `DELETE FROM auth.user_temp WHERE email = :id `
+	const psqlDelete = `DELETE FROM auth.user_temp WHERE email = :email `
 	m := UserTemp{Email: email}
 	rs, err := s.DB.NamedExec(psqlDelete, &m)
 	if err != nil {

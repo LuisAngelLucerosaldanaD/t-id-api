@@ -111,3 +111,17 @@ func (s *psql) getByEmail(email string) (*Users, error) {
 	}
 	return &mdl, nil
 }
+
+func (s *psql) getLasted(email string, limit, offset int) ([]*Users, error) {
+	var ms []*Users
+	const psqlGetAll = ` SELECT id , type_document, document_number, expedition_date, email, first_name, second_name, second_surname, age, gender, nationality, civil_status, first_surname, birth_date, country, department, city, real_ip, created_at, updated_at FROM auth.users where email <> $1 order by created_at desc limit $2 OFFSET $3`
+
+	err := s.DB.Select(&ms, psqlGetAll, email, limit, offset)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return ms, err
+	}
+	return ms, nil
+}
