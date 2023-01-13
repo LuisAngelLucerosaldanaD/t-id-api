@@ -126,3 +126,22 @@ func (s *psql) getByStatus(status string) ([]*WorkValidation, error) {
 	}
 	return ms, nil
 }
+
+// Update actualiza un registro en la BD
+func (s *psql) updateStatus(status string, userID string) error {
+	date := time.Now()
+	m := WorkValidation{
+		Status:    status,
+		UserId:    userID,
+		UpdatedAt: date,
+	}
+	const psqlUpdate = `UPDATE wf.work_validation SET status = :status, updated_at = :updated_at WHERE user_id = :user_id `
+	rs, err := s.DB.NamedExec(psqlUpdate, &m)
+	if err != nil {
+		return err
+	}
+	if i, _ := rs.RowsAffected(); i == 0 {
+		return fmt.Errorf("ecatch:108")
+	}
+	return nil
+}

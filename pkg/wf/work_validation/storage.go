@@ -19,6 +19,7 @@ type ServicesWorkValidationRepository interface {
 	getAll() ([]*WorkValidation, error)
 	getByUserId(userID string) (*WorkValidation, error)
 	getByStatus(status string) ([]*WorkValidation, error)
+	updateStatus(status string, userID string) error
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesWorkValidationRepository {

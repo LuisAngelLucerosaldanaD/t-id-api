@@ -11,4 +11,6 @@ func RouterWork(app *fiber.App, db *sqlx.DB, txID string) {
 	v1 := api.Group("/v1")
 	user := v1.Group("/work")
 	user.Get("/all", h.getTotalWork)
+	user.Post("/accept", h.acceptUserData)
+	user.Post("/refused", h.refusedUserData)
 }

@@ -4,6 +4,7 @@ import (
 	"check-id-api/internal/logger"
 	"check-id-api/internal/msg"
 	"check-id-api/pkg/auth"
+	"check-id-api/pkg/trx"
 	"check-id-api/pkg/wf"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -72,6 +73,90 @@ func (h *handlerWork) getTotalWork(c *fiber.Ctx) error {
 		Expired:   len(wfExpired),
 		NotStated: len(usersTemp),
 	}
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// acceptUserData godoc
+// @Summary Acepta la información registrada
+// @Description Método para registrar la validación del administrador frente a la data de un usuario
+// @tags Work
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param ReqAccept body ReqAccept true "Datos de solicitud para la aceptación"
+// @Success 200 {object} resAnny
+// @Router /api/v1/work/accept [post]
+func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
+	res := resAnny{Error: true}
+	req := ReqAccept{}
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("el id del usuario es requerido")
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+
+	code, err := srvWf.SrvWork.UpdateWorkValidationStatus("validado", req.UserID)
+	if err != nil {
+		logger.Error.Printf("No se pudo actualizar el registro, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de datos", "success", "Los datos registrados fueron validados y aceptados", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Datos registrados correctamente"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// refusedUserData godoc
+// @Summary Acepta la información registrada
+// @Description Método para registrar la validación del administrador frente a la data de un usuario
+// @tags Work
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param ReqAccept body ReqAccept true "Datos de solicitud para la aceptación"
+// @Success 200 {object} resAnny
+// @Router /api/v1/work/refused [post]
+func (h *handlerWork) refusedUserData(c *fiber.Ctx) error {
+	res := resAnny{Error: true}
+	req := ReqAccept{}
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("el id del usuario es requerido")
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+
+	code, err := srvWf.SrvWork.UpdateWorkValidationStatus("rechazado", req.UserID)
+	if err != nil {
+		logger.Error.Printf("No se pudo actualizar el registro, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de datos", "error", "Los datos fueron rechazados por un administrador", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Datos registrados correctamente"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)

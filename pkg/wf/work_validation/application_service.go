@@ -16,6 +16,7 @@ type PortsServerWorkValidation interface {
 	GetAllWorkValidation() ([]*WorkValidation, error)
 	GetWorkValidationByUserId(userId string) (*WorkValidation, int, error)
 	GetAllWorkValidationByStatus(status string) ([]*WorkValidation, error)
+	UpdateWorkValidationStatus(status string, userID string) (int, error)
 }
 
 type service struct {
@@ -110,4 +111,12 @@ func (s *service) GetWorkValidationByUserId(userId string) (*WorkValidation, int
 
 func (s *service) GetAllWorkValidationByStatus(status string) ([]*WorkValidation, error) {
 	return s.repository.getByStatus(status)
+}
+
+func (s *service) UpdateWorkValidationStatus(status string, userID string) (int, error) {
+	if err := s.repository.updateStatus(status, userID); err != nil {
+		logger.Error.Println(s.txID, " - couldn't update WorkValidation :", err)
+		return 18, err
+	}
+	return 29, nil
 }
