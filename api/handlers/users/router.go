@@ -10,6 +10,7 @@ func RouterUser(app *fiber.App, db *sqlx.DB, txID string) {
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
 	user := v1.Group("/user")
+	user.Post("/register", h.createUser)
 	user.Post("/upload-selfie", h.uploadSelfie)
 	user.Post("/upload-documents", h.uploadDocuments)
 	user.Post("/basic-information", h.registerBasicInformation)

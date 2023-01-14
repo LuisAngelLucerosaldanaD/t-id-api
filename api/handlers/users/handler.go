@@ -162,15 +162,69 @@ func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
 
 // registerBasicInformation godoc
 // @Summary Registro de información básica
-// @Description Método para el registro de los datos basicos de una persona
+// @Description Método para el registro de los datos básicos de una persona
+// @tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param BasicInformation body requestValidateIdentity true "request of validate user identity"
+// @Success 200 {object} resCreateUser
+// @Router /api/v1/user/basic-information [post]
+func (h *handlerUser) registerBasicInformation(c *fiber.Ctx) error {
+	res := resCreateUser{Error: true}
+	req := requestValidateIdentity{}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	user, code, err := srvAuth.SrvUser.UpdateUsers(req.Id, req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, req.FirstName, req.SecondName, req.SecondSurname, req.Age, req.Gender, req.Nationality, req.CivilStatus, req.FirstSurname, req.BirthDate, req.Country, req.Department, req.City, c.IP())
+	if err != nil {
+		logger.Error.Printf("couldn't create user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info", "Registro de información básica", user.ID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvWf.SrvWork.CreateWorkValidation("pendiente", user.ID)
+	if err != nil {
+		_, _ = srvAuth.SrvUser.DeleteUsers(user.ID)
+		_, _ = srvTrx.SrvTraceability.DeleteTraceabilityByUserID(user.ID)
+		logger.Error.Printf("couldn't start work, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = user
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// createUser godoc
+// @Summary Creación de un usuario
+// @Description Método para crear el usuario
 // @tags User
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param BasicInformation body requestValidateIdentity true "request of validate user identity"
 // @Success 200 {object} responseAnny
-// @Router /api/v1/user/basic-information [post]
-func (h *handlerUser) registerBasicInformation(c *fiber.Ctx) error {
+// @Router /api/v1/user/create [post]
+func (h *handlerUser) createUser(c *fiber.Ctx) error {
 	res := responseAnny{Error: true}
 	req := requestValidateIdentity{}
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
@@ -184,7 +238,7 @@ func (h *handlerUser) registerBasicInformation(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.UpdateUsers(uuid.New().String(), req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, req.FirstName, req.SecondName, req.SecondSurname, req.Age, req.Gender, req.Nationality, req.CivilStatus, req.FirstSurname, req.BirthDate, req.Country, req.Department, req.City, c.IP())
+	user, code, err := srvAuth.SrvUser.CreateUsers(uuid.New().String(), req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, req.FirstName, req.SecondName, req.SecondSurname, req.Age, req.Gender, req.Nationality, req.CivilStatus, req.FirstSurname, req.BirthDate, req.Country, req.Department, req.City, c.IP())
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
