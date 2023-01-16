@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS cfg.files(
     path VARCHAR (100) NOT NULL,
     name VARCHAR (100) NOT NULL,
     type int4  NOT NULL,
-    user_id VARCHAR (100) NOT NULL,
+    user_id uuid NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now()
 );

@@ -80,7 +80,7 @@ func (h *handlerWork) getTotalWork(c *fiber.Ctx) error {
 
 // acceptUserData godoc
 // @Summary Acepta la información registrada
-// @Description Método para registrar la validación del administrador frente a la data de un usuario
+// @Description Método para aceptar la data registrada de un usuario por parte del administrador
 // @tags Work
 // @Accept json
 // @Produce json
@@ -121,8 +121,8 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 }
 
 // refusedUserData godoc
-// @Summary Acepta la información registrada
-// @Description Método para registrar la validación del administrador frente a la data de un usuario
+// @Summary Rechaza la información registrada
+// @Description Método para rechazar la data registrada de un usuario por parte del administrador
 // @tags Work
 // @Accept json
 // @Produce json

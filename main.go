@@ -7,8 +7,8 @@ import (
 )
 
 // @title Check ID OnBoarding
-// @version 1.3
-// @description Api para OnBoarding y validación de identidad de una persona
+// @version 1.4
+// @description Api para OnBoarding y validación de identidad
 // @termsOfService https://www.bjungle.net/terms/
 // @contact.name API Support
 // @contact.email luis.lucero@bjungle.net

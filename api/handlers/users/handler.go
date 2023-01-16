@@ -292,8 +292,8 @@ func (h *handlerUser) createUser(c *fiber.Ctx) error {
 }
 
 // getUserSession godoc
-// @Summary Obtiene los datos registrados del usuario por su email
-// @Description Método para el obtener la información del usuario en sesión por su email
+// @Summary Obtiene los datos registrados del usuario por su email o su id
+// @Description Método para el obtener la información del usuario en sesión por su email o id
 // @tags User
 // @Accept json
 // @Produce json
@@ -421,8 +421,8 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 }
 
 // getLastedUsers godoc
-// @Summary Obtiene los últimos 5 registros de usuarios
-// @Description Método para el obtener los últimos 5 registros de los usuarios
+// @Summary Obtiene los registros de usuarios
+// @Description Método para el obtener los registros de los usuarios
 // @tags User
 // @Accept json
 // @Produce json
@@ -459,14 +459,14 @@ func (h *handlerUser) getLastedUsers(c *fiber.Ctx) error {
 		offset, _ = strconv.Atoi(offsetStr)
 	}
 
-	users, err := srvAuth.SrvUser.GetAllUsersLasted(email, limit, offset)
+	usersLasted, err := srvAuth.SrvUser.GetAllUsersLasted(email, limit, offset)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el listado de los últimos usuarios, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	for _, user := range users {
+	for _, user := range usersLasted {
 		validation, _, err := srvWf.SrvStatusReq.GetStatusRequestByUserID(user.ID)
 		if err != nil {
 			logger.Error.Printf("No se pudo obtener el estado del usuario, error: %s", err.Error())
@@ -484,6 +484,50 @@ func (h *handlerUser) getLastedUsers(c *fiber.Ctx) error {
 		})
 	}
 
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// getUsersDataPending godoc
+// @Summary Obtiene la cantidad de usuarios que no cargaron información requerida
+// @Description Método para el obtener la cantidad de usuarios que no han cargado la información básica como la selfie, el documento de identidad y la información básica
+// @tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Success 200 {object} resGetUsersDataPending
+// @Router /api/v1/user/data-pending [get]
+func (h *handlerUser) getUsersDataPending(c *fiber.Ctx) error {
+	res := resGetUsersDataPending{}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+
+	selfieData, err := srvAuth.SrvUser.GetAllNotUploadFile(1)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el listado de usuarios que no cargaron la selfie, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentsData, err := srvAuth.SrvUser.GetAllNotUploadFile(2)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el listado de usuarios que no cargaron el documento, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	basicInformation, err := srvAuth.SrvUser.GetAllNotStarted()
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el listado de usuarios que no cargaron la información básica, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = DataPending{
+		Selfie:           len(selfieData),
+		Document:         len(documentsData),
+		BasicInformation: len(basicInformation),
+	}
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)

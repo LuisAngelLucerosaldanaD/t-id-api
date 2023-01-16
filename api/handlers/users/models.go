@@ -104,3 +104,17 @@ type UserStatus struct {
 	Status        string    `json:"status"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
+
+type resGetUsersDataPending struct {
+	Error bool        `json:"error"`
+	Data  DataPending `json:"data"`
+	Code  int         `json:"code"`
+	Type  int         `json:"type"`
+	Msg   string      `json:"msg"`
+}
+
+type DataPending struct {
+	Selfie           int `json:"selfie"`
+	Document         int `json:"document"`
+	BasicInformation int `json:"basic_information"`
+}

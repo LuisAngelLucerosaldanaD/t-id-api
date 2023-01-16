@@ -18,6 +18,7 @@ type PortsServerUsers interface {
 	GetUsersByEmail(email string) (*Users, int, error)
 	GetAllUsersLasted(email string, limit, offset int) ([]*Users, error)
 	GetAllNotStarted() ([]*Users, error)
+	GetAllNotUploadFile(fileType int) ([]*Users, error)
 }
 
 type service struct {
@@ -112,4 +113,8 @@ func (s *service) GetAllUsersLasted(email string, limit, offset int) ([]*Users, 
 
 func (s *service) GetAllNotStarted() ([]*Users, error) {
 	return s.repository.getNotStarted()
+}
+
+func (s *service) GetAllNotUploadFile(fileType int) ([]*Users, error) {
+	return s.repository.getNoUploadFile(fileType)
 }

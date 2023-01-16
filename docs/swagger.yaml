@@ -10,9 +10,54 @@ definitions:
         type: string
       id:
         type: integer
+      type:
+        type: string
       updated_at:
         type: string
       user_id:
+        type: string
+    type: object
+  traceability.resTraceability:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/traceability.Traceability'
+        type: array
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  users.DataPending:
+    properties:
+      basic_information:
+        type: integer
+      document:
+        type: integer
+      selfie:
+        type: integer
+    type: object
+  users.UserStatus:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      first_surname:
+        type: string
+      id:
+        type: string
+      second_name:
+        type: string
+      second_surname:
+        type: string
+      status:
+        type: string
+      updated_at:
         type: string
     type: object
   users.UserValidation:
@@ -51,8 +96,6 @@ definitions:
         type: string
       nationality:
         type: string
-      role:
-        type: string
       second_name:
         type: string
       second_surname:
@@ -64,6 +107,65 @@ definitions:
       type_document:
         type: string
       updated_at:
+        type: string
+    type: object
+  users.Users:
+    properties:
+      age:
+        type: integer
+      birth_date:
+        type: string
+      city:
+        type: string
+      civil_status:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      department:
+        type: string
+      document_number:
+        type: integer
+      email:
+        type: string
+      expedition_date:
+        type: string
+      first_name:
+        type: string
+      first_surname:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      nationality:
+        type: string
+      real_ip:
+        type: string
+      second_name:
+        type: string
+      second_surname:
+        type: string
+      type_document:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  users.reqUploadDocument:
+    properties:
+      document_back_img:
+        type: string
+      document_front_img:
+        type: string
+      user_id:
+        type: string
+    type: object
+  users.reqUploadSelfie:
+    properties:
+      selfie_img:
+        type: string
+      user_id:
         type: string
     type: object
   users.requestValidateIdentity:
@@ -80,10 +182,6 @@ definitions:
         type: string
       department:
         type: string
-      document_back_img:
-        type: string
-      document_front_img:
-        type: string
       document_number:
         type: integer
       email:
@@ -96,16 +194,29 @@ definitions:
         type: string
       gender:
         type: string
+      id:
+        type: string
       nationality:
         type: string
       second_name:
         type: string
       second_surname:
         type: string
-      selfie_img:
-        type: string
       type_document:
         type: string
+    type: object
+  users.resCreateUser:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/users.Users'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
     type: object
   users.resGetUserSession:
     properties:
@@ -120,13 +231,26 @@ definitions:
       type:
         type: integer
     type: object
-  users.resTraceability:
+  users.resGetUsersDataPending:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/users.DataPending'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  users.resGetUsersLasted:
     properties:
       code:
         type: integer
       data:
         items:
-          $ref: '#/definitions/traceability.Traceability'
+          $ref: '#/definitions/users.UserStatus'
         type: array
       error:
         type: boolean
@@ -135,7 +259,7 @@ definitions:
       type:
         type: integer
     type: object
-  users.responseValidateUser:
+  users.responseAnny:
     properties:
       code:
         type: integer
@@ -148,18 +272,64 @@ definitions:
       type:
         type: integer
     type: object
-host: http://127.0.0.1:50050
+  work.ReqAccept:
+    properties:
+      user_id:
+        type: string
+    type: object
+  work.Status:
+    properties:
+      expired:
+        type: integer
+      not_stated:
+        type: integer
+      pending:
+        type: integer
+      refused:
+        type: integer
+      total:
+        type: integer
+      valid:
+        type: integer
+    type: object
+  work.resAllWork:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/work.Status'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  work.resAnny:
+    properties:
+      code:
+        type: integer
+      data:
+        type: string
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+host: http://172.147.77.149:50050
 info:
   contact:
-    email: info@bjungle.net
+    email: luis.lucero@bjungle.net
     name: API Support
-  description: Api para OnBoarding y validación de identidad de una persona
+  description: Api para OnBoarding y validación de identidad
   license:
     name: Software Owner
     url: https://www.bjungle.net/terms/licenses
   termsOfService: https://www.bjungle.net/terms/
-  title: Check ID
-  version: "1.2"
+  title: Check ID OnBoarding
+  version: "1.4"
 paths:
   /api/v1/traceability/user-session/{userID}:
     get:
@@ -185,15 +355,179 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/users.resTraceability'
+            $ref: '#/definitions/traceability.resTraceability'
       summary: Obtención de los datos de trazabilidad
       tags:
       - Traceability
-  /api/v1/user/user-session/{email}:
+  /api/v1/user/basic-information:
+    post:
+      consumes:
+      - application/json
+      description: Método para el registro de los datos básicos de una persona
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: request of validate user identity
+        in: body
+        name: BasicInformation
+        required: true
+        schema:
+          $ref: '#/definitions/users.requestValidateIdentity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.resCreateUser'
+      summary: Registro de información básica
+      tags:
+      - User
+  /api/v1/user/create:
+    post:
+      consumes:
+      - application/json
+      description: Método para crear el usuario
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: request of validate user identity
+        in: body
+        name: BasicInformation
+        required: true
+        schema:
+          $ref: '#/definitions/users.requestValidateIdentity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseAnny'
+      summary: Creación de un usuario
+      tags:
+      - User
+  /api/v1/user/data-pending:
     get:
       consumes:
       - application/json
-      description: Método para el obtener la información del usuario en sesión
+      description: Método para el obtener la cantidad de usuarios que no han cargado
+        la información básica como la selfie, el documento de identidad y la información
+        básica
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.resGetUsersDataPending'
+      summary: Obtiene la cantidad de usuarios que no cargaron información requerida
+      tags:
+      - User
+  /api/v1/user/upload-documents:
+    post:
+      consumes:
+      - application/json
+      description: Método para cargar el documento de identidad
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Documento de identidad
+        in: body
+        name: uploadDocument
+        required: true
+        schema:
+          $ref: '#/definitions/users.reqUploadDocument'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseAnny'
+      summary: Carga del documento de identidad
+      tags:
+      - User
+  /api/v1/user/upload-selfie:
+    post:
+      consumes:
+      - application/json
+      description: Método para cargar la selfie del usuario
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Selfie del usuario
+        in: body
+        name: UploadSelfie
+        required: true
+        schema:
+          $ref: '#/definitions/users.reqUploadSelfie'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseAnny'
+      summary: Carga de selfie del usuario
+      tags:
+      - User
+  /api/v1/user/user-session/{identifier}:
+    get:
+      consumes:
+      - application/json
+      description: Método para el obtener la información del usuario en sesión por
+        su email o id
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Identificador para la búsqueda del usuario
+        in: path
+        name: identifier
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.resGetUserSession'
+      summary: Obtiene los datos registrados del usuario por su email o su id
+      tags:
+      - User
+  /api/v1/user/users-lasted/{email}/{limit}/{offset}:
+    get:
+      consumes:
+      - application/json
+      description: Método para el obtener los registros de los usuarios
       parameters:
       - default: Bearer <Add access token here>
         description: Authorization
@@ -206,22 +540,32 @@ paths:
         name: email
         required: true
         type: string
+      - description: Cantidad de registros por consulta
+        in: path
+        name: limit
+        required: true
+        type: string
+      - description: Inicio del conteo de los registros por consulta
+        in: path
+        name: offset
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/users.resGetUserSession'
-      summary: Obtiene los datos registrados del usuario
+            $ref: '#/definitions/users.resGetUsersLasted'
+      summary: Obtiene los registros de usuarios
       tags:
       - User
-  /api/v1/user/validate-identity:
+  /api/v1/work/accept:
     post:
       consumes:
       - application/json
-      description: Método para el registro de los datos para la validación de identidad
-        de una persona
+      description: Método para aceptar la data registrada de un usuario por parte
+        del administrador
       parameters:
       - default: Bearer <Add access token here>
         description: Authorization
@@ -229,25 +573,79 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: request of validate user identity
+      - description: Datos de solicitud para la aceptación
         in: body
-        name: validateIdentity
+        name: ReqAccept
         required: true
         schema:
-          $ref: '#/definitions/users.requestValidateIdentity'
+          $ref: '#/definitions/work.ReqAccept'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/users.responseValidateUser'
-      summary: Registro de validación de identidad
+            $ref: '#/definitions/work.resAnny'
+      summary: Acepta la información registrada
       tags:
-      - User
+      - Work
+  /api/v1/work/all:
+    get:
+      consumes:
+      - application/json
+      description: Método para obtener la totalidad del trabajo registrado por lo
+        usuarios
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/work.resAllWork'
+      summary: Trae la totalidad del trabajo existente
+      tags:
+      - Work
+  /api/v1/work/refused:
+    post:
+      consumes:
+      - application/json
+      description: Método para rechazar la data registrada de un usuario por parte
+        del administrador
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Datos de solicitud para la aceptación
+        in: body
+        name: ReqAccept
+        required: true
+        schema:
+          $ref: '#/definitions/work.ReqAccept'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/work.resAnny'
+      summary: Rechaza la información registrada
+      tags:
+      - Work
 swagger: "2.0"
 tags:
 - description: Métodos referentes al usuario
   name: User
 - description: Métodos referentes a la trazabilidad
   name: Traceability
+- description: Métodos referentes al trabajo registrado
+  name: Work

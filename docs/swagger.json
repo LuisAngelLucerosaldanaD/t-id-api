@@ -1,20 +1,20 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Api para OnBoarding y validación de identidad de una persona",
-        "title": "Check ID",
+        "description": "Api para OnBoarding y validación de identidad",
+        "title": "Check ID OnBoarding",
         "termsOfService": "https://www.bjungle.net/terms/",
         "contact": {
             "name": "API Support",
-            "email": "info@bjungle.net"
+            "email": "luis.lucero@bjungle.net"
         },
         "license": {
             "name": "Software Owner",
             "url": "https://www.bjungle.net/terms/licenses"
         },
-        "version": "1.2"
+        "version": "1.4"
     },
-    "host": "http://127.0.0.1:50050",
+    "host": "http://172.147.77.149:50050",
     "basePath": "/",
     "paths": {
         "/api/v1/traceability/user-session/{userID}": {
@@ -51,15 +51,15 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.resTraceability"
+                            "$ref": "#/definitions/traceability.resTraceability"
                         }
                     }
                 }
             }
         },
-        "/api/v1/user/user-session/{email}": {
-            "get": {
-                "description": "Método para el obtener la información del usuario en sesión",
+        "/api/v1/user/basic-information": {
+            "post": {
+                "description": "Método para el registro de los datos básicos de una persona",
                 "consumes": [
                     "application/json"
                 ],
@@ -69,7 +69,248 @@
                 "tags": [
                     "User"
                 ],
-                "summary": "Obtiene los datos registrados del usuario",
+                "summary": "Registro de información básica",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "request of validate user identity",
+                        "name": "BasicInformation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.requestValidateIdentity"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.resCreateUser"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/create": {
+            "post": {
+                "description": "Método para crear el usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Creación de un usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "request of validate user identity",
+                        "name": "BasicInformation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.requestValidateIdentity"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseAnny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/data-pending": {
+            "get": {
+                "description": "Método para el obtener la cantidad de usuarios que no han cargado la información básica como la selfie, el documento de identidad y la información básica",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Obtiene la cantidad de usuarios que no cargaron información requerida",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.resGetUsersDataPending"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/upload-documents": {
+            "post": {
+                "description": "Método para cargar el documento de identidad",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Carga del documento de identidad",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Documento de identidad",
+                        "name": "uploadDocument",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.reqUploadDocument"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseAnny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/upload-selfie": {
+            "post": {
+                "description": "Método para cargar la selfie del usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Carga de selfie del usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Selfie del usuario",
+                        "name": "UploadSelfie",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.reqUploadSelfie"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseAnny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/user-session/{identifier}": {
+            "get": {
+                "description": "Método para el obtener la información del usuario en sesión por su email o id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Obtiene los datos registrados del usuario por su email o su id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Identificador para la búsqueda del usuario",
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.resGetUserSession"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/users-lasted/{email}/{limit}/{offset}": {
+            "get": {
+                "description": "Método para el obtener los registros de los usuarios",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Obtiene los registros de usuarios",
                 "parameters": [
                     {
                         "type": "string",
@@ -85,21 +326,35 @@
                         "name": "email",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cantidad de registros por consulta",
+                        "name": "limit",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Inicio del conteo de los registros por consulta",
+                        "name": "offset",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.resGetUserSession"
+                            "$ref": "#/definitions/users.resGetUsersLasted"
                         }
                     }
                 }
             }
         },
-        "/api/v1/user/validate-identity": {
+        "/api/v1/work/accept": {
             "post": {
-                "description": "Método para el registro de los datos para la validación de identidad de una persona",
+                "description": "Método para aceptar la data registrada de un usuario por parte del administrador",
                 "consumes": [
                     "application/json"
                 ],
@@ -107,9 +362,9 @@
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "Work"
                 ],
-                "summary": "Registro de validación de identidad",
+                "summary": "Acepta la información registrada",
                 "parameters": [
                     {
                         "type": "string",
@@ -120,12 +375,12 @@
                         "required": true
                     },
                     {
-                        "description": "request of validate user identity",
-                        "name": "validateIdentity",
+                        "description": "Datos de solicitud para la aceptación",
+                        "name": "ReqAccept",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.requestValidateIdentity"
+                            "$ref": "#/definitions/work.ReqAccept"
                         }
                     }
                 ],
@@ -133,7 +388,82 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseValidateUser"
+                            "$ref": "#/definitions/work.resAnny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/work/all": {
+            "get": {
+                "description": "Método para obtener la totalidad del trabajo registrado por lo usuarios",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Work"
+                ],
+                "summary": "Trae la totalidad del trabajo existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/work.resAllWork"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/work/refused": {
+            "post": {
+                "description": "Método para rechazar la data registrada de un usuario por parte del administrador",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Work"
+                ],
+                "summary": "Rechaza la información registrada",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos de solicitud para la aceptación",
+                        "name": "ReqAccept",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/work.ReqAccept"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/work.resAnny"
                         }
                     }
                 }
@@ -156,10 +486,79 @@
                 "id": {
                     "type": "integer"
                 },
+                "type": {
+                    "type": "string"
+                },
                 "updated_at": {
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "traceability.resTraceability": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/traceability.Traceability"
+                    }
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.DataPending": {
+            "type": "object",
+            "properties": {
+                "basic_information": {
+                    "type": "integer"
+                },
+                "document": {
+                    "type": "integer"
+                },
+                "selfie": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.UserStatus": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "first_surname": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "second_name": {
+                    "type": "string"
+                },
+                "second_surname": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -218,9 +617,6 @@
                 "nationality": {
                     "type": "string"
                 },
-                "role": {
-                    "type": "string"
-                },
                 "second_name": {
                     "type": "string"
                 },
@@ -237,6 +633,96 @@
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.Users": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "type": "integer"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "civil_status": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "department": {
+                    "type": "string"
+                },
+                "document_number": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expedition_date": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "first_surname": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string"
+                },
+                "real_ip": {
+                    "type": "string"
+                },
+                "second_name": {
+                    "type": "string"
+                },
+                "second_surname": {
+                    "type": "string"
+                },
+                "type_document": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.reqUploadDocument": {
+            "type": "object",
+            "properties": {
+                "document_back_img": {
+                    "type": "string"
+                },
+                "document_front_img": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.reqUploadSelfie": {
+            "type": "object",
+            "properties": {
+                "selfie_img": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -262,12 +748,6 @@
                 "department": {
                     "type": "string"
                 },
-                "document_back_img": {
-                    "type": "string"
-                },
-                "document_front_img": {
-                    "type": "string"
-                },
                 "document_number": {
                     "type": "integer"
                 },
@@ -286,6 +766,9 @@
                 "gender": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "nationality": {
                     "type": "string"
                 },
@@ -295,11 +778,28 @@
                 "second_surname": {
                     "type": "string"
                 },
-                "selfie_img": {
-                    "type": "string"
-                },
                 "type_document": {
                     "type": "string"
+                }
+            }
+        },
+        "users.resCreateUser": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/users.Users"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
                 }
             }
         },
@@ -323,7 +823,27 @@
                 }
             }
         },
-        "users.resTraceability": {
+        "users.resGetUsersDataPending": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/users.DataPending"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.resGetUsersLasted": {
             "type": "object",
             "properties": {
                 "code": {
@@ -332,7 +852,7 @@
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/traceability.Traceability"
+                        "$ref": "#/definitions/users.UserStatus"
                     }
                 },
                 "error": {
@@ -346,7 +866,78 @@
                 }
             }
         },
-        "users.responseValidateUser": {
+        "users.responseAnny": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "work.ReqAccept": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "work.Status": {
+            "type": "object",
+            "properties": {
+                "expired": {
+                    "type": "integer"
+                },
+                "not_stated": {
+                    "type": "integer"
+                },
+                "pending": {
+                    "type": "integer"
+                },
+                "refused": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "valid": {
+                    "type": "integer"
+                }
+            }
+        },
+        "work.resAllWork": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/work.Status"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "work.resAnny": {
             "type": "object",
             "properties": {
                 "code": {
@@ -375,6 +966,10 @@
         {
             "description": "Métodos referentes a la trazabilidad",
             "name": "Traceability"
+        },
+        {
+            "description": "Métodos referentes al trabajo registrado",
+            "name": "Work"
         }
     ]
 }
