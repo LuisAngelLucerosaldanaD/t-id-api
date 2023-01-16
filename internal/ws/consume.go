@@ -8,8 +8,7 @@ import (
 	"net/http"
 )
 
-func ConsumeWS(jsonBytes []byte, url, method, token string) ([]byte, int, error) {
-
+func ConsumeWS(jsonBytes []byte, url, method, token string, headers *map[string]string) ([]byte, int, error) {
 	var req http.Request
 
 	if method == "POST" {
@@ -36,12 +35,18 @@ func ConsumeWS(jsonBytes []byte, url, method, token string) ([]byte, int, error)
 		req.Header.Set("Authorization", token)
 	}
 
+	if headers != nil && len(*headers) > 0 {
+		for key, value := range *headers {
+			req.Header.Set(key, value)
+		}
+	}
+
 	client := &http.Client{}
 
 	resp, err := client.Do(&req)
 	if err != nil {
 		logger.Error.Printf("no se  puedo enviar la petición: %v  -- log: ", err)
-		return nil, resp.StatusCode, err
+		return nil, 500, err
 	}
 
 	defer func(Body io.ReadCloser) {

@@ -115,5 +115,7 @@ INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at) VA
 INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at) VALUES (113, 'no se pudo inicializar el wf', 'no se pudo inicializar el wf', '1', CAST('2020-08-12 12:15:36.053' AS TIMESTAMP), CAST('2020-08-12 12:15:36.053' AS TIMESTAMP));
 INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at) VALUES (114, 'El código del template debe ser numérico', 'El codigo del template debe ser numerico', '1', CAST('2020-08-12 12:15:36.053' AS TIMESTAMP), CAST('2020-08-12 12:15:36.053' AS TIMESTAMP));
 INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at) VALUES (115, 'No se pudo obtener el tipo documental del template', 'No se pudo obtener el tipo documental del template', '1', CAST('2020-08-12 12:15:36.053' AS TIMESTAMP), CAST('2020-08-12 12:15:36.053' AS TIMESTAMP));
+INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at) VALUES (116, 'No se pudo aceptar la data porque la validación de rostros no ha sido realizado', 'No se pudo aceptar la data porque la validación de rostros no ha sido realizado', '1', CAST('2020-08-12 12:15:36.053' AS TIMESTAMP), CAST('2020-08-12 12:15:36.053' AS TIMESTAMP));
+INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at) VALUES (117, 'Datos validado y aceptados correctamente', 'Datos validado y aceptados correctamente', '1', CAST('2020-08-12 12:15:36.053' AS TIMESTAMP), CAST('2020-08-12 12:15:36.053' AS TIMESTAMP));
 
 -- +migrate Down

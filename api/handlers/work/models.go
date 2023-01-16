@@ -28,3 +28,8 @@ type resAnny struct {
 type ReqAccept struct {
 	UserID string `json:"user_id"`
 }
+
+type ReqRefused struct {
+	UserID string `json:"user_id"`
+	Motivo string `json:"motivo"`
+}

@@ -457,12 +457,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Datos de solicitud para la aceptación",
-                        "name": "ReqAccept",
+                        "description": "Datos de solicitud para el rechazo",
+                        "name": "ReqRefused",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/work.ReqAccept"
+                            "$ref": "#/definitions/work.ReqRefused"
                         }
                     }
                 ],
@@ -896,6 +896,17 @@ const docTemplate = `{
         "work.ReqAccept": {
             "type": "object",
             "properties": {
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "work.ReqRefused": {
+            "type": "object",
+            "properties": {
+                "motivo": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "string"
                 }

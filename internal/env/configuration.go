@@ -2,8 +2,8 @@ package env
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -13,12 +13,13 @@ var (
 )
 
 type configuration struct {
-	App      App      `json:"app"`
-	DB       DB       `json:"db"`
-	Template Template `json:"template"`
-	SendGrid SendGrid `json:"send_grid"`
-	Files    Files    `json:"files"`
-	Aws      Aws      `json:"aws"`
+	App        App        `json:"app"`
+	DB         DB         `json:"db"`
+	Template   Template   `json:"template"`
+	SendGrid   SendGrid   `json:"send_grid"`
+	Files      Files      `json:"files"`
+	Aws        Aws        `json:"aws"`
+	Blockchain Blockchain `json:"blockchain"`
 }
 
 type App struct {
@@ -27,6 +28,7 @@ type App struct {
 	AllowedDomains    string `json:"allowed_domains"`
 	PathLog           string `json:"path_log"`
 	LogReviewInterval int    `json:"log_review_interval"`
+	EcdsaPrivateKey   string `json:"ecdsa_private_key"`
 	RegisterLog       bool   `json:"register_log"`
 	RSAPublicKey      string `json:"rsa_public_key"`
 	LoggerHttp        bool   `json:"logger_http"`
@@ -66,6 +68,14 @@ type Files struct {
 	} `json:"s3"`
 }
 
+type Blockchain struct {
+	UrlAuth  string `json:"url_auth"`
+	UrlApi   string `json:"url_api"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Wallet   string `json:"wallet"`
+}
+
 type Aws struct {
 	AWSACCESSKEYID     string `json:"AWS_ACCESS_KEY_ID"`
 	AWSSECRETACCESSKEY string `json:"AWS_SECRET_ACCESS_KEY"`
@@ -81,7 +91,7 @@ func NewConfiguration() *configuration {
 // y lo carga en un objeto de la estructura Configuration
 func fromFile() {
 	once.Do(func() {
-		b, err := ioutil.ReadFile("config.json")
+		b, err := os.ReadFile("config.json")
 		if err != nil {
 			log.Fatalf("no se pudo leer el archivo de configuración: %s", err.Error())
 		}

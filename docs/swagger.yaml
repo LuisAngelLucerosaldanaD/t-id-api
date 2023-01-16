@@ -277,6 +277,13 @@ definitions:
       user_id:
         type: string
     type: object
+  work.ReqRefused:
+    properties:
+      motivo:
+        type: string
+      user_id:
+        type: string
+    type: object
   work.Status:
     properties:
       expired:
@@ -625,12 +632,12 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: Datos de solicitud para la aceptación
+      - description: Datos de solicitud para el rechazo
         in: body
-        name: ReqAccept
+        name: ReqRefused
         required: true
         schema:
-          $ref: '#/definitions/work.ReqAccept'
+          $ref: '#/definitions/work.ReqRefused'
       produces:
       - application/json
       responses:
