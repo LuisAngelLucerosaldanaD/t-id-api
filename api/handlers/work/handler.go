@@ -30,31 +30,31 @@ func (h *handlerWork) getTotalWork(c *fiber.Ctx) error {
 	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 
-	wfOK, err := srvWf.SrvWork.GetAllWorkValidationByStatus("validado")
+	wfOK, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("validado")
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el total del trabajo validado, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	wfPending, err := srvWf.SrvWork.GetAllWorkValidationByStatus("pendiente")
+	wfPending, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("pendiente")
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el total del trabajo pendiente, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	wfRefused, err := srvWf.SrvWork.GetAllWorkValidationByStatus("rechazado")
+	wfRefused, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("rechazado")
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el total del trabajo rechazado, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	wfExpired, err := srvWf.SrvWork.GetAllWorkValidationByStatus("expirado")
+	wfExpired, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("expirado")
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el total del trabajo expirado, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 

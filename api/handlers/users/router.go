@@ -14,7 +14,6 @@ func RouterUser(app *fiber.App, db *sqlx.DB, txID string) {
 	user.Post("/upload-selfie", h.uploadSelfie)
 	user.Post("/upload-documents", h.uploadDocuments)
 	user.Post("/basic-information", h.registerBasicInformation)
-	user.Get("/user-session/:email", h.getUserSession)
+	user.Get("/user-session/:identifier", h.getUserSession)
 	user.Get("/users-lasted/:email/:limit/:offset", h.getLastedUsers)
-	user.Get("/:id", h.getUserSessionById)
 }
