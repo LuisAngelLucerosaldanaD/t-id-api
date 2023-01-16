@@ -58,7 +58,7 @@ func (h *handlerWork) getTotalWork(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	usersTemp, err := srvAuth.SrvUserTemp.GetAllUserTemp()
+	usersTemp, err := srvAuth.SrvUser.GetAllNotStarted()
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el total del trabajo no iniciado, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)

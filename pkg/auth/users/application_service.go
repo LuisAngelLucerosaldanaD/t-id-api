@@ -17,6 +17,7 @@ type PortsServerUsers interface {
 	GetAllUsers() ([]*Users, error)
 	GetUsersByEmail(email string) (*Users, int, error)
 	GetAllUsersLasted(email string, limit, offset int) ([]*Users, error)
+	GetAllNotStarted() ([]*Users, error)
 }
 
 type service struct {
@@ -107,4 +108,8 @@ func (s *service) GetUsersByEmail(email string) (*Users, int, error) {
 
 func (s *service) GetAllUsersLasted(email string, limit, offset int) ([]*Users, error) {
 	return s.repository.getLasted(email, limit, offset)
+}
+
+func (s *service) GetAllNotStarted() ([]*Users, error) {
+	return s.repository.getNotStarted()
 }

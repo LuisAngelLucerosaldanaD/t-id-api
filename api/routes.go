@@ -3,7 +3,6 @@ package api
 import (
 	"check-id-api/api/handlers/traceability"
 	"check-id-api/api/handlers/users"
-	user_temp "check-id-api/api/handlers/users_temp"
 	"check-id-api/api/handlers/work"
 	_ "check-id-api/docs"
 	"github.com/ansrivas/fiberprometheus/v2"
@@ -50,5 +49,4 @@ func loadRoutes(app *fiber.App, db *sqlx.DB, TxID string) {
 	users.RouterUser(app, db, TxID)
 	traceability.RouterTraceability(app, db, TxID)
 	work.RouterWork(app, db, TxID)
-	user_temp.RouterUserTemp(app, db, TxID)
 }
