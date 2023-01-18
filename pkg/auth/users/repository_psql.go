@@ -128,7 +128,7 @@ func (s *psql) getLasted(email string, limit, offset int) ([]*Users, error) {
 
 func (s *psql) getNotStarted() ([]*Users, error) {
 	var ms []*Users
-	const psqlGetAll = ` SELECT id , type_document, document_number, expedition_date, email, first_name, second_name, second_surname, age, gender, nationality, civil_status, first_surname, birth_date, country, department, city, real_ip, created_at, updated_at FROM auth.users where document_number = '' or document_number is null`
+	const psqlGetAll = ` SELECT id , type_document, document_number, expedition_date, email, first_name, second_name, second_surname, age, gender, nationality, civil_status, first_surname, birth_date, country, department, city, real_ip, created_at, updated_at FROM auth.users where document_number = 0 or document_number is null`
 
 	err := s.DB.Select(&ms, psqlGetAll)
 	if err != nil {
@@ -142,7 +142,7 @@ func (s *psql) getNotStarted() ([]*Users, error) {
 
 func (s *psql) getNoUploadFile(fileType int) ([]*Users, error) {
 	var ms []*Users
-	const psqlGetAll = `select SELECT id , type_document, document_number, expedition_date, email, first_name, second_name, second_surname, age, gender, nationality, civil_status, first_surname, birth_date, country, department, city, real_ip, created_at, updated_at 
+	const psqlGetAll = `SELECT id , type_document, document_number, expedition_date, email, first_name, second_name, second_surname, age, gender, nationality, civil_status, first_surname, birth_date, country, department, city, real_ip, created_at, updated_at 
  from auth.users u where (select f.id from cfg.files f where f.user_id = u.id and f."type" = $1) is null ;`
 
 	err := s.DB.Select(&ms, psqlGetAll, fileType)
