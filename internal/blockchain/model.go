@@ -78,3 +78,10 @@ type DataResponseCreateTransaction struct {
 	CreatedAt string  `json:"created_at,omitempty"`
 	UpdatedAt string  `json:"updated_at,omitempty"`
 }
+
+type WalletInfo struct {
+	Id       string `json:"id"`
+	Public   string `json:"public"`
+	Private  string `json:"private"`
+	Mnemonic string `json:"mnemonic"`
+}

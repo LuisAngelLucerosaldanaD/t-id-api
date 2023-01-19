@@ -13,13 +13,14 @@ var (
 )
 
 type configuration struct {
-	App        App        `json:"app"`
-	DB         DB         `json:"db"`
-	Template   Template   `json:"template"`
-	SendGrid   SendGrid   `json:"send_grid"`
-	Files      Files      `json:"files"`
-	Aws        Aws        `json:"aws"`
-	Blockchain Blockchain `json:"blockchain"`
+	App         App         `json:"app"`
+	DB          DB          `json:"db"`
+	Template    Template    `json:"template"`
+	SendGrid    SendGrid    `json:"send_grid"`
+	Files       Files       `json:"files"`
+	Aws         Aws         `json:"aws"`
+	Blockchain  Blockchain  `json:"blockchain"`
+	AuthService AuthService `json:"auth_service"`
 }
 
 type App struct {
@@ -80,6 +81,10 @@ type Aws struct {
 	AWSACCESSKEYID     string `json:"AWS_ACCESS_KEY_ID"`
 	AWSSECRETACCESSKEY string `json:"AWS_SECRET_ACCESS_KEY"`
 	AWSDEFAULTREGION   string `json:"AWS_DEFAULT_REGION"`
+}
+
+type AuthService struct {
+	Port string `json:"port"`
 }
 
 func NewConfiguration() *configuration {

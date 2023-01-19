@@ -2,14 +2,20 @@ package work
 
 import (
 	"check-id-api/internal/blockchain"
+	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
+	"check-id-api/internal/models"
 	"check-id-api/internal/msg"
+	"check-id-api/internal/send_grid"
+	"check-id-api/internal/template"
 	"check-id-api/pkg/auth"
 	"check-id-api/pkg/trx"
 	"check-id-api/pkg/wf"
+	"encoding/base64"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"net/http"
 	"strconv"
 	"strings"
@@ -95,6 +101,9 @@ func (h *handlerWork) getTotalWork(c *fiber.Ctx) error {
 func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 	res := resAnny{Error: true}
 	req := ReqAccept{}
+	param := make(map[string]string)
+	var mailAttachment []*mail.Attachment
+	e := env.NewConfiguration()
 	err := c.BodyParser(&req)
 	if err != nil {
 		logger.Error.Printf("el id del usuario es requerido")
@@ -212,7 +221,14 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 		},
 	}
 
-	trxId, err := blockchain.CreateTransaction(identifier, "Validación de identidad", description, "", strconv.FormatInt(user.DocumentNumber, 10))
+	walletInfo, err := blockchain.CreateAccountAndWallet(models.User(*user))
+	if err != nil {
+		logger.Error.Printf("No se pudo crear el usuario en OnlyOne, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	trxId, err := blockchain.CreateTransaction(identifier, "Validación de identidad", description, walletInfo.Id, "")
 	if err != nil {
 		logger.Error.Printf("No se pudo consultar el usuario, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
@@ -224,6 +240,58 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 		logger.Error.Printf("No se pudo registrar el id de la transacción, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fullName := strings.TrimSpace(user.FirstName + " " + user.SecondName + " " + user.FirstSurname + " " + user.SecondSurname)
+
+	param["TEMPLATE-PATH"] = "check_id_wallet.gohtml"
+	param["FULL_NAME"] = fullName
+	param["WALLET_ID"] = walletInfo.Id
+
+	body, err := template.GenerateTemplateMail(param)
+	if err != nil {
+		logger.Error.Printf("couldn't generate body in NotificationEmail: %v", err)
+		return err
+	}
+
+	filePrivate := mail.NewAttachment()
+	filePrivate.SetContent(base64.StdEncoding.EncodeToString([]byte(walletInfo.Private)))
+	filePrivate.SetType("text/plain")
+	filePrivate.SetFilename("private.pem")
+	filePrivate.SetDisposition("attachment")
+	mailAttachment = append(mailAttachment, filePrivate)
+
+	filePublic := mail.NewAttachment()
+	filePublic.SetContent(base64.StdEncoding.EncodeToString([]byte(walletInfo.Public)))
+	filePublic.SetType("text/plain")
+	filePublic.SetFilename("public.pem")
+	filePublic.SetDisposition("attachment")
+	mailAttachment = append(mailAttachment, filePublic)
+
+	fileMnemonic := mail.NewAttachment()
+	fileMnemonic.SetContent(base64.StdEncoding.EncodeToString([]byte(walletInfo.Mnemonic)))
+	fileMnemonic.SetType("text/plain")
+	fileMnemonic.SetFilename("mnemonic.txt")
+	fileMnemonic.SetDisposition("attachment")
+	mailAttachment = append(mailAttachment, fileMnemonic)
+
+	emailSd := send_grid.Model{
+		FromMail: e.SendGrid.FromMail,
+		FromName: e.SendGrid.FromName,
+		Tos: []send_grid.To{
+			{
+				Name: fullName,
+				Mail: user.Email,
+			},
+		},
+		Subject:     "Certificados públicos y privados OnlyOne",
+		HTMLContent: body,
+		Attachments: mailAttachment,
+	}
+
+	err = emailSd.SendMail()
+	if err != nil {
+		logger.Error.Println(h.TxID, " - error al enviar el correo con las credenciales de la wallet: %s", err.Error())
 	}
 
 	res.Data = "Datos registrados correctamente"
