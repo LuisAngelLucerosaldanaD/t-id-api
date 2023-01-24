@@ -176,7 +176,9 @@ func CreateAccountAndWallet(user models.User) (*WalletInfo, error) {
 		return nil, fmt.Errorf(resUser.Msg)
 	}
 
-	wallet, err := clientWallet.CreateWalletBySystem(ctx, &wallet_proto.RqCreateWalletBySystem{})
+	wallet, err := clientWallet.CreateWalletBySystem(ctx, &wallet_proto.RqCreateWalletBySystem{
+		IdentityNumber: resUser.Data.IdNumber,
+	})
 	if err != nil {
 		logger.Error.Printf("couldn't create wallet: %v", err)
 		return nil, err
