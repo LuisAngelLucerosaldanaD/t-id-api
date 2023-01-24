@@ -154,13 +154,23 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 			Attributes: []blockchain.Attribute{
 				{
 					Id:    1,
-					Name:  "Nombres",
-					Value: strings.TrimSpace(user.FirstName + " " + user.SecondName),
+					Name:  "Primer Nombre",
+					Value: strings.TrimSpace(user.FirstName),
+				},
+				{
+					Id:    1,
+					Name:  "Segundo Nombre",
+					Value: strings.TrimSpace(user.SecondName),
 				},
 				{
 					Id:    2,
-					Name:  "Apellidos",
-					Value: strings.TrimSpace(user.FirstSurname + " " + user.SecondSurname),
+					Name:  "Primer Apellido",
+					Value: strings.TrimSpace(user.FirstSurname),
+				},
+				{
+					Id:    2,
+					Name:  "Segundo Apellido",
+					Value: strings.TrimSpace(user.SecondSurname),
 				},
 				{
 					Id:    3,

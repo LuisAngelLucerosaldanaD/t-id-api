@@ -55,7 +55,7 @@ type DB struct {
 }
 
 type SendGrid struct {
-	Key      string `json:"password"`
+	Key      string `json:"key"`
 	FromMail string `json:"from_mail"`
 	FromName string `json:"from_name"`
 }
