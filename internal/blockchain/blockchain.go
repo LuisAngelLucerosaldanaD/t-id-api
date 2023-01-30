@@ -194,6 +194,25 @@ func CreateAccountAndWallet(user models.User) (*WalletInfo, error) {
 		return nil, err
 	}
 
+	resUserWallet, err := clientUser.CreateUserWallet(ctx, &users_proto.RqCreateUserWallet{
+		UserId:   resUser.Data.Id,
+		WalletId: wallet.Data.Id,
+	})
+	if err != nil {
+		logger.Error.Printf("couldn't create user wallet: %v", err)
+		return nil, err
+	}
+
+	if resUserWallet == nil {
+		logger.Error.Printf("couldn't create user wallet: %v", err)
+		return nil, err
+	}
+
+	if resUserWallet.Error {
+		logger.Error.Printf(resUserWallet.Msg)
+		return nil, err
+	}
+
 	resAccountTo, err := clientAccount.CreateAccounting(ctx, &accounting_proto.RequestCreateAccounting{
 		Id:       uuid.New().String(),
 		IdWallet: wallet.Data.Id,
