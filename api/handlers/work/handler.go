@@ -9,6 +9,7 @@ import (
 	"check-id-api/internal/send_grid"
 	"check-id-api/internal/template"
 	"check-id-api/pkg/auth"
+	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
 	"check-id-api/pkg/wf"
 	"encoding/base64"
@@ -113,6 +114,7 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
 	status, err := srvWf.SrvWork.GetAllWorkValidationByStatus("ok")
 	if err != nil {
@@ -205,7 +207,7 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 				{
 					Id:    11,
 					Name:  "Fecha de Expedición del Documento",
-					Value: user.ExpeditionDate.String(),
+					Value: user.ExpeditionDate.UTC().String(),
 				},
 				{
 					Id:    12,
@@ -225,13 +227,27 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 				{
 					Id:    15,
 					Name:  "Fecha de Creación",
-					Value: user.CreatedAt.String(),
+					Value: user.CreatedAt.UTC().String(),
 				},
 			},
 		},
 	}
 
-	walletInfo, err := blockchain.CreateAccountAndWallet(models.User(*user))
+	file, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(1, user.ID)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener la foto del usuario, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileS3, code, err := srvCfg.SrvFilesS3.GetFileByPath(file.Path, file.Name)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener la foto del usuario de S3, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	walletInfo, err := blockchain.CreateAccountAndWallet(models.User(*user), fileS3.Encoding, fileS3.NameDocument)
 	if err != nil {
 		logger.Error.Printf("No se pudo crear el usuario en OnlyOne, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)

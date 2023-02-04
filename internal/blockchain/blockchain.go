@@ -112,7 +112,7 @@ func CreateTransaction(identifier []Identifier, nameTransaction, descriptionTran
 	return resData.Id, nil
 }
 
-func CreateAccountAndWallet(user models.User) (*WalletInfo, error) {
+func CreateAccountAndWallet(user models.User, fileB64 string, fileName string) (*WalletInfo, error) {
 	e := env.NewConfiguration()
 
 	connAuth, err := grpc.Dial(e.AuthService.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -159,7 +159,7 @@ func CreateAccountAndWallet(user models.User) (*WalletInfo, error) {
 		IdType:        8,
 		IdNumber:      strconv.FormatInt(user.DocumentNumber, 10),
 		Cellphone:     "",
-		BirthDate:     user.BirthDate.String(),
+		BirthDate:     user.BirthDate.Format("2006-01-02T15:04:05.000Z"),
 	})
 	if err != nil {
 		logger.Error.Printf("error al crear el usuario: %s", err.Error())
@@ -174,6 +174,25 @@ func CreateAccountAndWallet(user models.User) (*WalletInfo, error) {
 	if resUser.Error {
 		logger.Error.Printf(resUser.Msg)
 		return nil, fmt.Errorf(resUser.Msg)
+	}
+
+	resPhoto, err := clientUser.UpdateUserPhoto(ctx, &users_proto.RequestUpdateUserPhoto{
+		FileEncode: fileB64,
+		FileName:   fileName,
+	})
+	if err != nil {
+		logger.Error.Printf("error al cargar la foto de perfil: %s", err.Error())
+		return nil, err
+	}
+
+	if resPhoto == nil {
+		logger.Error.Printf("error al cargar la foto de perfil")
+		return nil, fmt.Errorf("error al cargar la foto de perfil")
+	}
+
+	if resPhoto.Error {
+		logger.Error.Printf(resPhoto.Msg)
+		return nil, fmt.Errorf(resPhoto.Msg)
 	}
 
 	wallet, err := clientWallet.CreateWalletBySystem(ctx, &wallet_proto.RqCreateWalletBySystem{
