@@ -6,11 +6,11 @@ import (
 )
 
 type responseAnny struct {
-	Error bool   `json:"error"`
-	Data  string `json:"data"`
-	Code  int    `json:"code"`
-	Type  int    `json:"type"`
-	Msg   string `json:"msg"`
+	Error bool        `json:"error"`
+	Data  interface{} `json:"data"`
+	Code  int         `json:"code"`
+	Type  int         `json:"type"`
+	Msg   string      `json:"msg"`
 }
 
 type resCreateUser struct {

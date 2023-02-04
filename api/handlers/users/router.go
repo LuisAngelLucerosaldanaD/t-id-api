@@ -17,4 +17,5 @@ func RouterUser(app *fiber.App, db *sqlx.DB, txID string) {
 	user.Get("/user-session/:identifier", h.getUserSession)
 	user.Get("/users-lasted/:email/:limit/:offset", h.getLastedUsers)
 	user.Get("/data-pending", h.getUsersDataPending)
+	user.Get("/validate/:identity_number", h.validateUser)
 }

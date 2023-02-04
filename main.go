@@ -21,6 +21,8 @@ import (
 // @tag.description Métodos referentes a la trazabilidad
 // @tag.name Work
 // @tag.description Métodos referentes al trabajo registrado
+// @tag.name Client
+// @tag.description Métodos referentes al cliente
 // @BasePath /
 func main() {
 	c := env.NewConfiguration()

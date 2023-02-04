@@ -17,6 +17,46 @@
     "host": "http://172.147.77.149:50050",
     "basePath": "/",
     "paths": {
+        "/api/v1/clients/{nit}": {
+            "get": {
+                "description": "Método para obtener la información del cliente de CheckID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Client"
+                ],
+                "summary": "Obtiene la data del cliente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "NIT del cliente",
+                        "name": "nit",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/clients.ResClient"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/traceability/user-session/{userID}": {
             "get": {
                 "description": "Método para obtener la trazabilidad registrada para el proceso de verificación de identidad",
@@ -352,6 +392,39 @@
                 }
             }
         },
+        "/api/v1/user/validate/{identity_number}": {
+            "get": {
+                "description": "Método para verificar si el usuario ha validado su identidad",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Verifica si el usuario ha validado su identidad",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseAnny"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/work/accept": {
             "post": {
                 "description": "Método para aceptar la data registrada de un usuario por parte del administrador",
@@ -471,6 +544,58 @@
         }
     },
     "definitions": {
+        "clients.Client": {
+            "type": "object",
+            "properties": {
+                "banner": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logo_small": {
+                    "type": "string"
+                },
+                "main_color": {
+                    "type": "string"
+                },
+                "nit": {
+                    "type": "string"
+                },
+                "second_color": {
+                    "type": "string"
+                },
+                "url_api": {
+                    "type": "string"
+                },
+                "url_redirect": {
+                    "type": "string"
+                }
+            }
+        },
+        "clients.ResClient": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/clients.Client"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
         "traceability.Traceability": {
             "type": "object",
             "properties": {
@@ -872,9 +997,7 @@
                 "code": {
                     "type": "integer"
                 },
-                "data": {
-                    "type": "string"
-                },
+                "data": {},
                 "error": {
                     "type": "boolean"
                 },
@@ -981,6 +1104,10 @@
         {
             "description": "Métodos referentes al trabajo registrado",
             "name": "Work"
+        },
+        {
+            "description": "Métodos referentes al cliente",
+            "name": "Client"
         }
     ]
 }

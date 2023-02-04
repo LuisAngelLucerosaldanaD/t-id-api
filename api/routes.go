@@ -1,6 +1,7 @@
 package api
 
 import (
+	"check-id-api/api/handlers/clients"
 	"check-id-api/api/handlers/traceability"
 	"check-id-api/api/handlers/users"
 	"check-id-api/api/handlers/work"
@@ -49,4 +50,5 @@ func loadRoutes(app *fiber.App, db *sqlx.DB, TxID string) {
 	users.RouterUser(app, db, TxID)
 	traceability.RouterTraceability(app, db, TxID)
 	work.RouterWork(app, db, TxID)
+	clients.RouterClients(app, db, TxID)
 }

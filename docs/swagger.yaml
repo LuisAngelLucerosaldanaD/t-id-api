@@ -1,5 +1,39 @@
 basePath: /
 definitions:
+  clients.Client:
+    properties:
+      banner:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      logo_small:
+        type: string
+      main_color:
+        type: string
+      nit:
+        type: string
+      second_color:
+        type: string
+      url_api:
+        type: string
+      url_redirect:
+        type: string
+    type: object
+  clients.ResClient:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/clients.Client'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
   traceability.Traceability:
     properties:
       action:
@@ -263,8 +297,7 @@ definitions:
     properties:
       code:
         type: integer
-      data:
-        type: string
+      data: {}
       error:
         type: boolean
       msg:
@@ -338,6 +371,33 @@ info:
   title: Check ID OnBoarding
   version: "1.4"
 paths:
+  /api/v1/clients/{nit}:
+    get:
+      consumes:
+      - application/json
+      description: Método para obtener la información del cliente de CheckID
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: NIT del cliente
+        in: path
+        name: nit
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/clients.ResClient'
+      summary: Obtiene la data del cliente
+      tags:
+      - Client
   /api/v1/traceability/user-session/{userID}:
     get:
       consumes:
@@ -567,6 +627,28 @@ paths:
       summary: Obtiene los registros de usuarios
       tags:
       - User
+  /api/v1/user/validate/{identity_number}:
+    get:
+      consumes:
+      - application/json
+      description: Método para verificar si el usuario ha validado su identidad
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseAnny'
+      summary: Verifica si el usuario ha validado su identidad
+      tags:
+      - User
   /api/v1/work/accept:
     post:
       consumes:
@@ -656,3 +738,5 @@ tags:
   name: Traceability
 - description: Métodos referentes al trabajo registrado
   name: Work
+- description: Métodos referentes al cliente
+  name: Client

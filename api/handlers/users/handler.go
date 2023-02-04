@@ -532,3 +532,57 @@ func (h *handlerUser) getUsersDataPending(c *fiber.Ctx) error {
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
 }
+
+// getUsersDataPending godoc
+// @Summary Verifica si el usuario ha validado su identidad
+// @Description Método para verificar si el usuario ha validado su identidad
+// @tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Success 200 {object} responseAnny
+// @Router /api/v1/user/validate/{identity_number} [get]
+func (h *handlerUser) validateUser(c *fiber.Ctx) error {
+	res := responseAnny{Error: true}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+
+	documentNumber, err := strconv.ParseInt(c.Params("identity_number"), 10, 64)
+	if err != nil {
+		logger.Error.Printf("el numero de identificacion es incorrecto, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	user, code, err := srvAuth.SrvUser.GetUsersByIdentityNumber(documentNumber)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	validation, code, err := srvAuth.SrvValidationUsers.GetValidationUsersByUserID(user.ID)
+	if err != nil {
+		logger.Error.Printf("No se pudo consultar la validacion de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = true
+	if validation == nil {
+		res.Data = false
+	}
+
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+/*
+nit
+nombre
+banner
+logo_smal
+main color
+second color
+url redirect
+*/
