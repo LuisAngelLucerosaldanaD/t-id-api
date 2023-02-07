@@ -478,6 +478,10 @@ func (h *handlerUser) getLastedUsers(c *fiber.Ctx) error {
 			logger.Error.Printf("No se pudo obtener el estado del usuario, error: %s", err.Error())
 			continue
 		}
+
+		if validation == nil {
+			continue
+		}
 		res.Data = append(res.Data, &UserStatus{
 			ID:            user.ID,
 			Email:         user.Email,
