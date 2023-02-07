@@ -563,6 +563,11 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	if user == nil {
+		res.Code, res.Type, res.Msg = 5, 1, "No existe un usuario registrado con la información proporcionada"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
 	validation, code, err := srvAuth.SrvValidationUsers.GetValidationUsersByUserID(user.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo consultar la validacion de identidad, error: %s", err.Error())
