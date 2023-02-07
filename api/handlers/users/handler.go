@@ -4,18 +4,22 @@ import (
 	"check-id-api/internal/aws_ia"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/msg"
+	"check-id-api/internal/ws"
 	"check-id-api/pkg/auth"
 	"check-id-api/pkg/auth/users"
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
 	"check-id-api/pkg/wf"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"github.com/asaskevich/govalidator"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type handlerUser struct {
@@ -609,13 +613,25 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 
 	user, code, err := srvAuth.SrvUser.GetUsersByIdentityNumber(req.DocumentNumber)
 	if err != nil {
-		logger.Error.Printf("no se pudo parsear el cuerpo de la solicitud, error: %s", err.Error())
+		logger.Error.Printf("no se pudo obtener el usuario a validar, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
 	if user == nil {
 		res.Code, res.Type, res.Msg = 22, 1, "No hay un usuario registrado con la información proporcionada"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	userValidation, code, err := srvAuth.SrvValidationUsers.GetValidationUsersByUserID(user.ID)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener el id de la validación de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if userValidation == nil {
+		res.Code, res.Type, res.Msg = 403, 1, "El usuario aun no ha validado su identidad en el portal"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -659,13 +675,60 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	reqWs := ReqWsValidation{}
+
 	if !resp {
 		res.Code, res.Type, res.Msg = 22, 1, "La persona no es la misma que la del documento de identidad"
-		return c.Status(http.StatusAccepted).JSON(res)
+		reqWs = ReqWsValidation{
+			TransactionId:  "-",
+			UserId:         user.ID,
+			DocumentNumber: strconv.FormatInt(user.DocumentNumber, 10),
+			ValidatedAt:    time.Now().UTC().String(),
+			ValidatorId:    "",
+			RequestId:      req.RequestID,
+		}
+	} else {
+		res.Data = "Validación de identidad realizada correctamente, la persona es la misma que la del documento de identificación"
+		res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+		res.Error = false
+		reqWs = ReqWsValidation{
+			TransactionId:  userValidation.TransactionId,
+			UserId:         user.ID,
+			DocumentNumber: strconv.FormatInt(user.DocumentNumber, 10),
+			ValidatedAt:    time.Now().UTC().String(),
+			ValidatorId:    "",
+			RequestId:      req.RequestID,
+		}
 	}
 
-	res.Data = "Validación de identidad realizada correctamente, la persona es la misma que la del documento de identificación"
-	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-	res.Error = false
+	if req.Nit != "" {
+		client, code, err := srvCfg.SrvClients.GetClientsByNit(req.Nit)
+		if err != nil {
+			logger.Error.Printf("No se pudo obtener el cliente: %v", err)
+			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener el cliente"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if client == nil {
+			res.Code, res.Type, res.Msg = code, 1, "No se encontró un cliente con los datos proporcionados"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if client.UrlApi != "" {
+			reqBytes, _ := json.Marshal(&reqWs)
+			_, code, err := ws.ConsumeWS(reqBytes, client.UrlApi, "POST", "", nil)
+			if err != nil {
+				logger.Error.Printf("No se pudo enviar la petición para registra la validación de identidad: %v", err)
+				res.Code, res.Type, res.Msg = code, 1, "No se pudo enviar la petición para registra la validación de identidad"
+				return c.Status(http.StatusAccepted).JSON(res)
+			}
+
+			if code != 200 {
+				logger.Error.Printf("El servicio para registrar la validación de identidad respondió con un código diferente al 200, código: %d", code)
+				res.Code, res.Type, res.Msg = code, 1, fmt.Sprintf("El servicio para registrar la validación de identidad respondió con un código diferente al 200, código: %d", code)
+				return c.Status(http.StatusAccepted).JSON(res)
+			}
+		}
+	}
 	return c.Status(http.StatusOK).JSON(res)
 }

@@ -122,4 +122,15 @@ type DataPending struct {
 type ReqValidationFace struct {
 	FaceImage      string `json:"face_image"`
 	DocumentNumber int64  `json:"document_number"`
+	Nit            string `json:"nit"`
+	RequestID      string `json:"request-id"`
+}
+
+type ReqWsValidation struct {
+	TransactionId  string `json:"transaction_id"`
+	UserId         string `json:"user_id"`
+	DocumentNumber string `json:"document_number"`
+	ValidatedAt    string `json:"validated_at"`
+	ValidatorId    string `json:"validator_id"`
+	RequestId      string `json:"request_id"`
 }
