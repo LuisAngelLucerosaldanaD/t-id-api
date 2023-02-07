@@ -34,12 +34,13 @@ type App struct {
 	RSAPublicKey      string `json:"rsa_public_key"`
 	LoggerHttp        bool   `json:"logger_http"`
 	Language          string `json:"language"`
+	TLS               bool   `json:"tls"`
+	Cert              string `json:"cert"`
+	Key               string `json:"key"`
 }
 
 type Template struct {
-	EmailCode        string `json:"email_code"`
-	EmailToken       string `json:"email_token"`
-	EmailWalletToken string `json:"email_wallet_token"`
+	WalletMail string `json:"wallet_mail"`
 }
 
 type DB struct {

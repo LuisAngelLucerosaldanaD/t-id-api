@@ -1,6 +1,7 @@
 package users
 
 import (
+	"check-id-api/internal/aws_ia"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/msg"
 	"check-id-api/pkg/auth"
@@ -8,6 +9,7 @@ import (
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
 	"check-id-api/pkg/wf"
+	"encoding/base64"
 	"github.com/asaskevich/govalidator"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -533,13 +535,14 @@ func (h *handlerUser) getUsersDataPending(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(res)
 }
 
-// getUsersDataPending godoc
+// validateUser godoc
 // @Summary Verifica si el usuario ha validado su identidad
 // @Description Método para verificar si el usuario ha validado su identidad
 // @tags User
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param identity_number path string true "Número de identificación del usuario"
 // @Success 200 {object} responseAnny
 // @Router /api/v1/user/validate/{identity_number} [get]
 func (h *handlerUser) validateUser(c *fiber.Ctx) error {
@@ -577,12 +580,82 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(res)
 }
 
-/*
-nit
-nombre
-banner
-logo_smal
-main color
-second color
-url redirect
-*/
+// validationFace godoc
+// @Summary Verifica la identidad de un usuario
+// @Description Método para verificar la identidad de una persona
+// @tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param ReqValidationFace body ReqValidationFace true "Datos para la verificación de identidad"
+// @Success 200 {object} responseAnny
+// @Router /api/v1/user/validation [post]
+func (h *handlerUser) validationFace(c *fiber.Ctx) error {
+	res := responseAnny{Error: true}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	req := ReqValidationFace{}
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("no se pudo parsear el cuerpo de la solicitud, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	user, code, err := srvAuth.SrvUser.GetUsersByIdentityNumber(req.DocumentNumber)
+	if err != nil {
+		logger.Error.Printf("no se pudo parsear el cuerpo de la solicitud, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		res.Code, res.Type, res.Msg = 22, 1, "No hay un usuario registrado con la información proporcionada"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileDocFront, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(2, user.ID)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentB64, code, err := srvCfg.SrvFilesS3.GetFileByPath(fileDocFront.Path, fileDocFront.Name)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	selfieBytes, err := base64.StdEncoding.DecodeString(req.FaceImage)
+	if err != nil {
+		logger.Error.Printf("couldn't decode selfie: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentFrontBytes, err := base64.StdEncoding.DecodeString(documentB64.Encoding)
+	if err != nil {
+		logger.Error.Printf("couldn't decode document front: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	resp, err := aws_ia.CompareFaces(selfieBytes, documentFrontBytes)
+	if err != nil {
+		logger.Error.Printf("no se pudo comparar los rostros de la persona y el documento de identidad: %v", err)
+		res.Code, res.Type, res.Msg = 22, 1, "no se pudo comparar los rostros de la persona y el documento de identidad"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if !resp {
+		res.Code, res.Type, res.Msg = 22, 1, "La persona no es la misma que la del documento de identidad"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Validación de identidad realizada correctamente, la persona es la misma que la del documento de identificación"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}

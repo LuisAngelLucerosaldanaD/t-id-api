@@ -24,6 +24,48 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/clients": {
+            "post": {
+                "description": "Método para crear el cliente en el sistema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Client"
+                ],
+                "summary": "Crea el cliente en el sistema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos del cliente a crear",
+                        "name": "Client",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/clients.Client"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/clients.ResAnny"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/clients/{nit}": {
             "get": {
                 "description": "Método para obtener la información del cliente de CheckID",
@@ -420,6 +462,55 @@ const docTemplate = `{
                         "name": "Authorization",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Número de identificación del usuario",
+                        "name": "identity_number",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseAnny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/validation": {
+            "post": {
+                "description": "Método para verificar la identidad de una persona",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Verifica la identidad de un usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos para la verificación de identidad",
+                        "name": "ReqValidationFace",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.ReqValidationFace"
+                        }
                     }
                 ],
                 "responses": {
@@ -583,6 +674,24 @@ const docTemplate = `{
                 }
             }
         },
+        "clients.ResAnny": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
         "clients.ResClient": {
             "type": "object",
             "properties": {
@@ -663,6 +772,17 @@ const docTemplate = `{
                 },
                 "selfie": {
                     "type": "integer"
+                }
+            }
+        },
+        "users.ReqValidationFace": {
+            "type": "object",
+            "properties": {
+                "document_number": {
+                    "type": "integer"
+                },
+                "face_image": {
+                    "type": "string"
                 }
             }
         },

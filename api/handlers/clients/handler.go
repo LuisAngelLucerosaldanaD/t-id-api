@@ -94,3 +94,78 @@ func (h *handlerWork) getDataClient(c *fiber.Ctx) error {
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
 }
+
+// CreateClient godoc
+// @Summary Crea el cliente en el sistema
+// @Description Método para crear el cliente en el sistema
+// @tags Client
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param Client body Client true "Datos del cliente a crear"
+// @Success 200 {object} ResAnny
+// @Router /api/v1/clients [post]
+func (h *handlerWork) CreateClient(c *fiber.Ctx) error {
+	res := ResAnny{Error: true}
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	req := Client{}
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("No se pudo parsear el cuerpo de la petición, erro: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	client, code, err := srvCfg.SrvClients.GetClientsByNit(req.Nit)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el cliente, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if client != nil {
+		logger.Error.Printf("Ya existe un cliente creado con la información proporcionada")
+		res.Code, res.Type, res.Msg = msg.GetByCode(5, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileS3Banner, err := srvCfg.SrvFilesS3.UploadFile(req.Nit, "banner.png", req.Banner)
+	if err != nil {
+		logger.Error.Printf("No se pudo cargar el banner, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileBanner, code, err := srvCfg.SrvFiles.CreateFiles(fileS3Banner.Path, fileS3Banner.FileName, 6, "2435b1d2-6e0a-4541-a3a5-810b22e961d1")
+	if err != nil {
+		logger.Error.Printf("No se pudo crear la data del banner, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileS3Small, err := srvCfg.SrvFilesS3.UploadFile(req.Nit, "logo_small.png", req.LogoSmall)
+	if err != nil {
+		logger.Error.Printf("No se pudo cargar el logo small, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(5, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileSmall, code, err := srvCfg.SrvFiles.CreateFiles(fileS3Small.Path, fileS3Small.FileName, 7, "2435b1d2-6e0a-4541-a3a5-810b22e961d1")
+	if err != nil {
+		logger.Error.Printf("No se pudo cargar la data del logo small, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvClients.CreateClients(req.FullName, req.Nit, strconv.FormatInt(fileBanner.ID, 10), strconv.FormatInt(fileSmall.ID, 10), req.MainColor, req.SecondColor, req.UrlRedirect, req.UrlApi)
+	if err != nil {
+		logger.Error.Printf("No se pudo crear al cliente, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Cliente creado correctamente"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}

@@ -270,7 +270,7 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 
 	fullName := strings.TrimSpace(user.FirstName + " " + user.SecondName + " " + user.FirstSurname + " " + user.SecondSurname)
 
-	param["TEMPLATE-PATH"] = "check_id_wallet.gohtml"
+	param["TEMPLATE-PATH"] = e.Template.WalletMail
 	param["FULL_NAME"] = fullName
 	param["WALLET_ID"] = walletInfo.Id
 

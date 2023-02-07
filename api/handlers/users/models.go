@@ -118,3 +118,8 @@ type DataPending struct {
 	Document         int `json:"document"`
 	BasicInformation int `json:"basic_information"`
 }
+
+type ReqValidationFace struct {
+	FaceImage      string `json:"face_image"`
+	DocumentNumber int64  `json:"document_number"`
+}

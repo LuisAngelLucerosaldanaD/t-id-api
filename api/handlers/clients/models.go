@@ -19,3 +19,11 @@ type Client struct {
 	UrlRedirect string `json:"url_redirect"`
 	UrlApi      string `json:"url_api"`
 }
+
+type ResAnny struct {
+	Error bool        `json:"error"`
+	Data  interface{} `json:"data"`
+	Code  int         `json:"code"`
+	Type  int         `json:"type"`
+	Msg   string      `json:"msg"`
+}
