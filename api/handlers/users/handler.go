@@ -621,6 +621,11 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	if fileDocFront == nil {
+		res.Code, res.Type, res.Msg = 22, 1, "El usuario no ha cargado su documento de identidad aun"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
 	documentB64, code, err := srvCfg.SrvFilesS3.GetFileByPath(fileDocFront.Path, fileDocFront.Name)
 	if err != nil {
 		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
