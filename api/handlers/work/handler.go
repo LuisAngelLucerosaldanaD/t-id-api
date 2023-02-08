@@ -128,20 +128,6 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	code, err := srvWf.SrvStatusReq.UpdateStatusRequestByUserId("validado", "La información del usuario ha sido validado correctamente", req.UserID)
-	if err != nil {
-		logger.Error.Printf("No se pudo actualizar el registro, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de datos", "success", "Los datos registrados fueron validados y aceptados", req.UserID)
-	if err != nil {
-		logger.Error.Printf("couldn't create traceability, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
 	user, code, err := srvAuth.SrvUser.GetUsersByID(req.UserID)
 	if err != nil {
 		logger.Error.Printf("No se pudo consultar el usuario, error: %v", err)
@@ -265,6 +251,20 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 	if err != nil {
 		logger.Error.Printf("No se pudo registrar el id de la transacción, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	code, err = srvWf.SrvStatusReq.UpdateStatusRequestByUserId("validado", "La información del usuario ha sido validado correctamente", req.UserID)
+	if err != nil {
+		logger.Error.Printf("No se pudo actualizar el registro, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de datos", "success", "Los datos registrados fueron validados y aceptados", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
