@@ -708,12 +708,14 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 	if req.Nit != "" {
 		client, code, err := srvCfg.SrvClients.GetClientsByNit(req.Nit)
 		if err != nil {
+			res.Data = ""
 			logger.Error.Printf("No se pudo obtener el cliente: %v", err)
 			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener el cliente"
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
 
 		if client == nil {
+			res.Data = ""
 			res.Code, res.Type, res.Msg = code, 1, "No se encontró un cliente con los datos proporcionados"
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
@@ -723,16 +725,19 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 			_, code, err := ws.ConsumeWS(reqBytes, client.UrlApi, "POST", "", nil)
 			if err != nil {
 				logger.Error.Printf("No se pudo enviar la petición para registra la validación de identidad: %v", err)
-				res.Code, res.Type, res.Msg = code, 1, "No se pudo enviar la petición para registra la validación de identidad"
+				res.Data = ""
+				res.Code, res.Type, res.Msg = 403, 1, "No se pudo enviar la petición para registra la validación de identidad"
 				return c.Status(http.StatusAccepted).JSON(res)
 			}
 
 			if code != 200 {
 				logger.Error.Printf("El servicio para registrar la validación de identidad respondió con un código diferente al 200, código: %d", code)
+				res.Data = ""
 				res.Code, res.Type, res.Msg = code, 1, fmt.Sprintf("El servicio para registrar la validación de identidad respondió con un código diferente al 200, código: %d", code)
 				return c.Status(http.StatusAccepted).JSON(res)
 			}
 		}
 	}
+
 	return c.Status(http.StatusOK).JSON(res)
 }

@@ -277,7 +277,6 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 	body, err := template.GenerateTemplateMail(param)
 	if err != nil {
 		logger.Error.Printf("couldn't generate body in NotificationEmail: %v", err)
-		return err
 	}
 
 	filePrivate := mail.NewAttachment()
