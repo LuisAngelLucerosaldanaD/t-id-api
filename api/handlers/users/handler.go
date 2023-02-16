@@ -19,6 +19,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -679,34 +680,26 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	reqWs := ReqWsValidation{}
+	reqWs := ReqWsValidation{
+		UserId:         "",
+		DocumentNumber: strconv.FormatInt(user.DocumentNumber, 10),
+		ValidatedAt:    time.Now().UTC().String(),
+		ValidatorId:    "",
+		RequestId:      req.RequestID,
+	}
 
 	if !resp {
 		res.Code, res.Type, res.Msg = 22, 1, "La persona no es la misma que la del documento de identidad"
-		reqWs = ReqWsValidation{
-			TransactionId:  "-",
-			UserId:         user.ID,
-			DocumentNumber: strconv.FormatInt(user.DocumentNumber, 10),
-			ValidatedAt:    time.Now().UTC().String(),
-			ValidatorId:    "",
-			RequestId:      req.RequestID,
-		}
+		reqWs.TransactionId = "-"
 	} else {
 		res.Data = "Validación de identidad realizada correctamente, la persona es la misma que la del documento de identificación"
 		res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 		res.Error = false
-		reqWs = ReqWsValidation{
-			TransactionId:  userValidation.TransactionId,
-			UserId:         user.ID,
-			DocumentNumber: strconv.FormatInt(user.DocumentNumber, 10),
-			ValidatedAt:    time.Now().UTC().String(),
-			ValidatorId:    "",
-			RequestId:      req.RequestID,
-		}
+		reqWs.TransactionId = userValidation.TransactionId
 	}
 
 	if req.Nit != "" {
-		client, code, err := srvCfg.SrvClients.GetClientsByNit(req.Nit)
+		client, code, err := srvCfg.SrvClients.GetClientsByNit(strings.ReplaceAll(req.Nit, "/", ""))
 		if err != nil {
 			res.Data = ""
 			logger.Error.Printf("No se pudo obtener el cliente: %v", err)
@@ -720,7 +713,22 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
 
-		if client.UrlApi != "" {
+		validationRequest, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, req.RequestID)
+		if err != nil {
+			res.Data = ""
+			logger.Error.Printf("No se pudo obtener los datos de la validacion de identidad: %v", err)
+			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener los datos de la validacion de identidad"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		dateExpired := validationRequest.ExpiredAt.Sub(time.Now())
+		if dateExpired.Minutes() <= 0 {
+			res.Data = ""
+			res.Code, res.Type, res.Msg = 22, 1, "La fecha para validar la identidad a caducado"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if client.UrlApi != "" && validationRequest.MaxNumValidation == 0 {
 			reqBytes, _ := json.Marshal(&reqWs)
 			_, code, err := ws.ConsumeWS(reqBytes, client.UrlApi, "POST", "", nil)
 			if err != nil {

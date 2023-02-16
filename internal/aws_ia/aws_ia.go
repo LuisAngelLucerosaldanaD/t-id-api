@@ -64,13 +64,13 @@ func CompareFaces(face1, face2 []byte) (bool, error) {
 	var similarity float64
 
 	if result.FaceMatches == nil || len(result.FaceMatches) == 0 {
-		return false, fmt.Errorf("faces are not similar enough: %f", similarity)
+		return false, nil
 	}
 
 	similarity = *result.FaceMatches[0].Similarity
 
 	if similarity <= 90 {
-		return false, fmt.Errorf("faces are not similar enough: %f", similarity)
+		return false, nil
 	}
 
 	return true, nil

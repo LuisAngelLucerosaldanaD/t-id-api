@@ -6,14 +6,16 @@ import (
 	"check-id-api/pkg/cfg/files"
 	"check-id-api/pkg/cfg/files_s3"
 	"check-id-api/pkg/cfg/messages"
+	"check-id-api/pkg/cfg/validation_request"
 	"github.com/jmoiron/sqlx"
 )
 
 type Server struct {
-	SrvMessage messages.PortsServerMessages
-	SrvFiles   files.PortsServerFiles
-	SrvFilesS3 files_s3.PortsServerFile
-	SrvClients clients.PortsServerClients
+	SrvMessage           messages.PortsServerMessages
+	SrvFiles             files.PortsServerFiles
+	SrvFilesS3           files_s3.PortsServerFile
+	SrvClients           clients.PortsServerClients
+	SrvValidationRequest validation_request.PortsServerValidationRequest
 }
 
 func NewServerCfg(db *sqlx.DB, user *models.User, txID string) *Server {
@@ -30,10 +32,14 @@ func NewServerCfg(db *sqlx.DB, user *models.User, txID string) *Server {
 	repoClients := clients.FactoryStorage(db, user, txID)
 	srvClients := clients.NewClientsService(repoClients, user, txID)
 
+	repoValidationRequest := validation_request.FactoryStorage(db, user, txID)
+	srvValidationRequest := validation_request.NewValidationRequestService(repoValidationRequest, user, txID)
+
 	return &Server{
-		SrvMessage: srvMessage,
-		SrvFiles:   srvFiles,
-		SrvFilesS3: srvFilesS3,
-		SrvClients: srvClients,
+		SrvMessage:           srvMessage,
+		SrvFiles:             srvFiles,
+		SrvFilesS3:           srvFilesS3,
+		SrvClients:           srvClients,
+		SrvValidationRequest: srvValidationRequest,
 	}
 }

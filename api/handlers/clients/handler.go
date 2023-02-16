@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type handlerWork struct {
@@ -165,6 +166,66 @@ func (h *handlerWork) CreateClient(c *fiber.Ctx) error {
 	}
 
 	res.Data = "Cliente creado correctamente"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// GetValidationRequest godoc
+// @Summary Obtiene el flujo de validación de un usuario
+// @Description Método para obtener el flujo de validación de identidad de un usuario
+// @tags Client
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param nit path string true "NIT del cliente"
+// @Param request_id path string true "Número de solicitud"
+// @Param document_number path string true "Número de identificación del usuario"
+// @Success 200 {object} ResAnny
+// @Router /api/v1/validation-workflow/{nit}/{request_id}/{document_number} [get]
+func (h *handlerWork) GetValidationRequest(c *fiber.Ctx) error {
+	res := ResAnny{Error: true}
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	nit := c.Params("nit")
+	requestID := c.Params("request_id")
+	documentNumber := c.Params("document_number")
+	if nit == "" || requestID == "" {
+		logger.Error.Printf("No se pudo parasear los valores de busqueda")
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	client, code, err := srvCfg.SrvClients.GetClientsByNit(nit)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el cliente, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	validationRequest, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, requestID)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener la configuracion de la validación de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if validationRequest.UserIdentification != documentNumber {
+		res.Code, res.Type, res.Msg = 22, 1, "Este usuario no tiene configurado una solicitud de validación de identidad en el flujo"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	dateExpired := validationRequest.ExpiredAt.Sub(time.Now())
+	if dateExpired.Minutes() <= 0 {
+		res.Code, res.Type, res.Msg = 22, 1, "La fecha para validar la identidad a caducado"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if validationRequest.MaxNumValidation == 0 {
+		res.Code, res.Type, res.Msg = 22, 1, "Se ha superado la cantidad máximas de consultas configuradas para este flujo de validación de identidad"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = validationRequest
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
