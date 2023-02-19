@@ -21,6 +21,7 @@ type configuration struct {
 	Aws         Aws         `json:"aws"`
 	Blockchain  Blockchain  `json:"blockchain"`
 	AuthService AuthService `json:"auth_service"`
+	FaceApi     FaceApi     `json:"face_api"`
 }
 
 type App struct {
@@ -86,6 +87,10 @@ type Aws struct {
 
 type AuthService struct {
 	Port string `json:"port"`
+}
+
+type FaceApi struct {
+	CompareFace string `json:"compare_face"`
 }
 
 func NewConfiguration() *configuration {

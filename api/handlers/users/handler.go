@@ -673,7 +673,7 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	resp, err := aws_ia.CompareFaces(selfieBytes, documentFrontBytes)
+	resp, err := aws_ia.CompareFacesV2(selfieBytes, documentFrontBytes)
 	if err != nil {
 		logger.Error.Printf("no se pudo comparar los rostros de la persona y el documento de identidad: %v", err)
 		res.Code, res.Type, res.Msg = 22, 1, "no se pudo comparar los rostros de la persona y el documento de identidad"

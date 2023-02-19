@@ -202,10 +202,22 @@ func (h *handlerWork) GetValidationRequest(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	if client == nil {
+		logger.Error.Printf("No se pudo obtener el cliente")
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
 	validationRequest, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, requestID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener la configuracion de la validación de identidad, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if validationRequest == nil {
+		logger.Error.Printf("No se pudo obtener la data del flujo de validación de identidad")
+		res.Code, res.Type, res.Msg = 404, 1, "No se encontró información sobre el flujo de validación de identidad con los datos ingresados"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
