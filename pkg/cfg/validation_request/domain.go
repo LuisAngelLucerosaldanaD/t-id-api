@@ -14,11 +14,12 @@ type ValidationRequest struct {
 	RequestId          string    `json:"request_id" db:"request_id" valid:"required"`
 	ExpiredAt          time.Time `json:"expired_at" db:"expired_at" valid:"required"`
 	UserIdentification string    `json:"user_identification" db:"user_identification" valid:"required"`
+	Status             string    `json:"status" db:"status" valid:"required"`
 	CreatedAt          time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`
 }
 
-func NewValidationRequest(id int64, clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string) *ValidationRequest {
+func NewValidationRequest(id int64, clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string, status string) *ValidationRequest {
 	return &ValidationRequest{
 		ID:                 id,
 		ClientId:           clientId,
@@ -26,16 +27,18 @@ func NewValidationRequest(id int64, clientId int64, maxNumValidation int, reques
 		RequestId:          requestId,
 		ExpiredAt:          expiredAt,
 		UserIdentification: userIdentification,
+		Status:             status,
 	}
 }
 
-func NewCreateValidationRequest(clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string) *ValidationRequest {
+func NewCreateValidationRequest(clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string, status string) *ValidationRequest {
 	return &ValidationRequest{
 		ClientId:           clientId,
 		MaxNumValidation:   maxNumValidation,
 		RequestId:          requestId,
 		ExpiredAt:          expiredAt,
 		UserIdentification: userIdentification,
+		Status:             status,
 	}
 }
 

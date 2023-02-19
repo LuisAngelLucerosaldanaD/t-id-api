@@ -1,5 +1,7 @@
 package clients
 
+import "time"
+
 type ResClient struct {
 	Error bool   `json:"error"`
 	Data  Client `json:"data"`
@@ -26,4 +28,13 @@ type ResAnny struct {
 	Code  int         `json:"code"`
 	Type  int         `json:"type"`
 	Msg   string      `json:"msg"`
+}
+
+type ReqCreateWorkflow struct {
+	Nit                string    `json:"nit"`
+	MaxNumValidation   int       `json:"max_num_validation"`
+	RequestId          string    `json:"request_id"`
+	ExpiredAt          time.Time `json:"expired_at"`
+	UserIdentification string    `json:"user_identification"`
+	Status             string    `json:"status"`
 }

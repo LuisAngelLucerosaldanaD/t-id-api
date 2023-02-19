@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS cfg.validation_request(
     request_id VARCHAR (100) NOT NULL,
     expired_at TIMESTAMP  NOT NULL,
     user_identification VARCHAR (100) NOT NULL,
+    status varchar (15) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now()
 );

@@ -226,9 +226,14 @@ func (h *handlerWork) GetValidationRequest(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	if validationRequest.Status != "pending" {
+		res.Code, res.Type, res.Msg = 22, 1, "El flujo de validación de identidad ya ha sido realizada por la persona asignada"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
 	dateExpired := validationRequest.ExpiredAt.Sub(time.Now())
 	if dateExpired.Minutes() <= 0 {
-		res.Code, res.Type, res.Msg = 22, 1, "La fecha para validar la identidad a caducado"
+		res.Code, res.Type, res.Msg = 22, 1, "Se ha superado la fecha máxima configurada para este flujo de validación de identidad"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -238,6 +243,64 @@ func (h *handlerWork) GetValidationRequest(c *fiber.Ctx) error {
 	}
 
 	res.Data = validationRequest
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// CreateValidationRequest godoc
+// @Summary Crea el flujo de validación de identidad
+// @Description Método para crear el flujo de validación de identidad
+// @tags Client
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param ReqCreateWorkflow body ReqCreateWorkflow true "Datos para creación del flujo"
+// @Success 200 {object} ResAnny
+// @Router /api/v1/validation-workflow [post]
+func (h *handlerWork) CreateValidationRequest(c *fiber.Ctx) error {
+	res := ResAnny{Error: true}
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	req := ReqCreateWorkflow{}
+	err := c.BodyParser(req)
+	if err != nil {
+		logger.Error.Printf("No se pudo parsear el modelo de la solicitud, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	client, code, err := srvCfg.SrvClients.GetClientsByNit(req.Nit)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el cliente, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if client == nil {
+		res.Code, res.Type, res.Msg = 403, 1, "No se encontró un cliente con los datos ingresados"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	identityReq, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, req.RequestId)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el flujo de validacion de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if identityReq != nil {
+		res.Code, res.Type, res.Msg = 5, 1, "El flujo de validación para este usuario ya existe"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvValidationRequest.CreateValidationRequest(client.ID, req.MaxNumValidation, req.RequestId, req.ExpiredAt, req.UserIdentification, req.Status)
+	if err != nil {
+		logger.Error.Printf("No se pudo crear el flujo de valdiacion, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Flujo de validación de identidad creado correctamente"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)

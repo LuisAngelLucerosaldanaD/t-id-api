@@ -1,6 +1,7 @@
 package users
 
 import (
+	"check-id-api/api/handlers/clients"
 	"check-id-api/internal/aws_ia"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/msg"
@@ -8,6 +9,7 @@ import (
 	"check-id-api/pkg/auth"
 	"check-id-api/pkg/auth/users"
 	"check-id-api/pkg/cfg"
+	"check-id-api/pkg/cfg/validation_request"
 	"check-id-api/pkg/trx"
 	"check-id-api/pkg/wf"
 	"encoding/base64"
@@ -616,6 +618,46 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	var client *clients.Client
+	var identityReq *validation_request.ValidationRequest
+
+	if req.Nit != "" {
+		client, code, err := srvCfg.SrvClients.GetClientsByNit(strings.ReplaceAll(req.Nit, "/", ""))
+		if err != nil {
+			logger.Error.Printf("No se pudo obtener el cliente: %v", err)
+			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener el cliente"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if client == nil {
+			res.Code, res.Type, res.Msg = 22, 1, "No se encontró un cliente con los datos proporcionados"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		identityReq, code, err = srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, req.RequestID)
+		if err != nil {
+			logger.Error.Printf("No se pudo obtener los datos de la validacion de identidad: %v", err)
+			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener los datos de la validacion de identidad"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if identityReq.Status != "pending" {
+			res.Code, res.Type, res.Msg = 202, 1, "La validación de identidad para este flujo ya ha sido realizada"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		dateExpired := identityReq.ExpiredAt.Sub(time.Now())
+		if dateExpired.Minutes() <= 0 {
+			res.Code, res.Type, res.Msg = 403, 1, "La fecha para validar la identidad ha caducado"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if identityReq.MaxNumValidation == 0 {
+			res.Code, res.Type, res.Msg = 403, 1, "Se ha superado el número máximo de validaciones configurado para este flujo de validación de identidad"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+	}
+
 	user, code, err := srvAuth.SrvUser.GetUsersByIdentityNumber(req.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("no se pudo obtener el usuario a validar, error: %s", err.Error())
@@ -688,47 +730,36 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 		RequestId:      req.RequestID,
 	}
 
+	status := ""
+
 	if !resp {
 		res.Code, res.Type, res.Msg = 22, 1, "La persona no es la misma que la del documento de identidad"
 		reqWs.TransactionId = "-"
+		status = "refused"
 	} else {
 		res.Data = "Validación de identidad realizada correctamente, la persona es la misma que la del documento de identificación"
 		res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 		res.Error = false
 		reqWs.TransactionId = userValidation.TransactionId
+		status = "accept"
 	}
 
-	if req.Nit != "" {
-		client, code, err := srvCfg.SrvClients.GetClientsByNit(strings.ReplaceAll(req.Nit, "/", ""))
+	if client != nil && identityReq != nil {
+
+		numMaxRequest := identityReq.MaxNumValidation - 1
+		if numMaxRequest > 0 {
+			status = identityReq.Status
+		}
+
+		_, code, err = srvCfg.SrvValidationRequest.UpdateValidationRequest(identityReq.ID, identityReq.ClientId, numMaxRequest, identityReq.RequestId, identityReq.ExpiredAt, identityReq.UserIdentification, status)
 		if err != nil {
+			logger.Error.Printf("No se pudo actualizar el numero maximo de solicitud de validación, error: %v", err)
 			res.Data = ""
-			logger.Error.Printf("No se pudo obtener el cliente: %v", err)
-			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener el cliente"
+			res.Code, res.Type, res.Msg = 23, 1, "No se pudo actualizar el número máximo de solicitud de validación"
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
 
-		if client == nil {
-			res.Data = ""
-			res.Code, res.Type, res.Msg = code, 1, "No se encontró un cliente con los datos proporcionados"
-			return c.Status(http.StatusAccepted).JSON(res)
-		}
-
-		validationRequest, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, req.RequestID)
-		if err != nil {
-			res.Data = ""
-			logger.Error.Printf("No se pudo obtener los datos de la validacion de identidad: %v", err)
-			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener los datos de la validacion de identidad"
-			return c.Status(http.StatusAccepted).JSON(res)
-		}
-
-		dateExpired := validationRequest.ExpiredAt.Sub(time.Now())
-		if dateExpired.Minutes() <= 0 {
-			res.Data = ""
-			res.Code, res.Type, res.Msg = 22, 1, "La fecha para validar la identidad a caducado"
-			return c.Status(http.StatusAccepted).JSON(res)
-		}
-
-		if client.UrlApi != "" && validationRequest.MaxNumValidation == 0 {
+		if client.UrlApi != "" && numMaxRequest == 0 {
 			reqBytes, _ := json.Marshal(&reqWs)
 			_, code, err := ws.ConsumeWS(reqBytes, client.UrlApi, "POST", "", nil)
 			if err != nil {

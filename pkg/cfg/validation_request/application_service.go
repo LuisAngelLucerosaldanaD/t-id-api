@@ -9,8 +9,8 @@ import (
 )
 
 type PortsServerValidationRequest interface {
-	CreateValidationRequest(clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string) (*ValidationRequest, int, error)
-	UpdateValidationRequest(id int64, clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string) (*ValidationRequest, int, error)
+	CreateValidationRequest(clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string, status string) (*ValidationRequest, int, error)
+	UpdateValidationRequest(id int64, clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string, status string) (*ValidationRequest, int, error)
 	DeleteValidationRequest(id int64) (int, error)
 	GetValidationRequestByID(id int64) (*ValidationRequest, int, error)
 	GetAllValidationRequest() ([]*ValidationRequest, error)
@@ -27,8 +27,8 @@ func NewValidationRequestService(repository ServicesValidationRequestRepository,
 	return &service{repository: repository, user: user, txID: TxID}
 }
 
-func (s *service) CreateValidationRequest(clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string) (*ValidationRequest, int, error) {
-	m := NewCreateValidationRequest(clientId, maxNumValidation, requestId, expiredAt, userIdentification)
+func (s *service) CreateValidationRequest(clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string, status string) (*ValidationRequest, int, error) {
+	m := NewCreateValidationRequest(clientId, maxNumValidation, requestId, expiredAt, userIdentification, status)
 	if valid, err := m.valid(); !valid {
 		logger.Error.Println(s.txID, " - don't meet validations:", err)
 		return m, 15, err
@@ -44,8 +44,8 @@ func (s *service) CreateValidationRequest(clientId int64, maxNumValidation int, 
 	return m, 29, nil
 }
 
-func (s *service) UpdateValidationRequest(id int64, clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string) (*ValidationRequest, int, error) {
-	m := NewValidationRequest(id, clientId, maxNumValidation, requestId, expiredAt, userIdentification)
+func (s *service) UpdateValidationRequest(id int64, clientId int64, maxNumValidation int, requestId string, expiredAt time.Time, userIdentification string, status string) (*ValidationRequest, int, error) {
+	m := NewValidationRequest(id, clientId, maxNumValidation, requestId, expiredAt, userIdentification, status)
 	if id == 0 {
 		logger.Error.Println(s.txID, " - don't meet validations:", fmt.Errorf("id is required"))
 		return m, 15, fmt.Errorf("id is required")

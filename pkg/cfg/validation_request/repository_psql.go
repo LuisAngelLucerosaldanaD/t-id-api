@@ -26,7 +26,7 @@ func newValidationRequestPsqlRepository(db *sqlx.DB, user *models.User, txID str
 
 // Create registra en la BD
 func (s *psql) create(m *ValidationRequest) error {
-	const psqlInsert = `INSERT INTO cfg.validation_request (client_id, max_num_validation, request_id, expired_at, user_identification) VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at, updated_at`
+	const psqlInsert = `INSERT INTO cfg.validation_request (client_id, max_num_validation, request_id, expired_at, user_identification, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at, updated_at`
 	stmt, err := s.DB.Prepare(psqlInsert)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (s *psql) create(m *ValidationRequest) error {
 func (s *psql) update(m *ValidationRequest) error {
 	date := time.Now()
 	m.UpdatedAt = date
-	const psqlUpdate = `UPDATE cfg.validation_request SET client_id = :client_id, max_num_validation = :max_num_validation, request_id = :request_id, expired_at = :expired_at, user_identification = :user_identification, updated_at = :updated_at WHERE id = :id `
+	const psqlUpdate = `UPDATE cfg.validation_request SET client_id = :client_id, max_num_validation = :max_num_validation, request_id = :request_id, expired_at = :expired_at, user_identification = :user_identification, status = :status, updated_at = :updated_at WHERE id = :id `
 	rs, err := s.DB.NamedExec(psqlUpdate, &m)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (s *psql) delete(id int64) error {
 
 // GetByID consulta un registro por su ID
 func (s *psql) getByID(id int64) (*ValidationRequest, error) {
-	const psqlGetByID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, created_at, updated_at FROM cfg.validation_request WHERE id = $1 `
+	const psqlGetByID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, status, created_at, updated_at FROM cfg.validation_request WHERE id = $1 `
 	mdl := ValidationRequest{}
 	err := s.DB.Get(&mdl, psqlGetByID, id)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *psql) getByID(id int64) (*ValidationRequest, error) {
 // GetAll consulta todos los registros de la BD
 func (s *psql) getAll() ([]*ValidationRequest, error) {
 	var ms []*ValidationRequest
-	const psqlGetAll = ` SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, created_at, updated_at FROM cfg.validation_request `
+	const psqlGetAll = ` SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, status, created_at, updated_at FROM cfg.validation_request `
 
 	err := s.DB.Select(&ms, psqlGetAll)
 	if err != nil {
@@ -103,9 +103,9 @@ func (s *psql) getAll() ([]*ValidationRequest, error) {
 	return ms, nil
 }
 
-// getByClientID consulta un registro por su ID
+// getByClientIDAndRequestID consulta un registro por su ID
 func (s *psql) getByClientIDAndRequestID(clientIid int64, requestID string) (*ValidationRequest, error) {
-	const psqlGetByClientID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, created_at, updated_at FROM cfg.validation_request WHERE client_id = $1 and request_id = $2 limit 1`
+	const psqlGetByClientID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, status, created_at, updated_at FROM cfg.validation_request WHERE client_id = $1 and request_id = $2 limit 1`
 	mdl := ValidationRequest{}
 	err := s.DB.Get(&mdl, psqlGetByClientID, clientIid, requestID)
 	if err != nil {
