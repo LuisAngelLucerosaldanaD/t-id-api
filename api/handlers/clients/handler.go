@@ -293,7 +293,7 @@ func (h *handlerWork) CreateValidationRequest(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvValidationRequest.CreateValidationRequest(client.ID, req.MaxNumValidation, req.RequestId, req.ExpiredAt, req.UserIdentification, req.Status)
+	_, code, err = srvCfg.SrvValidationRequest.CreateValidationRequest(client.ID, req.MaxNumValidation, req.RequestId, req.ExpiredAt, req.UserIdentification, "pending")
 	if err != nil {
 		logger.Error.Printf("No se pudo crear el flujo de valdiacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)

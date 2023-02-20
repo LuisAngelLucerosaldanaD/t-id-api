@@ -36,5 +36,4 @@ type ReqCreateWorkflow struct {
 	RequestId          string    `json:"request_id"`
 	ExpiredAt          time.Time `json:"expired_at"`
 	UserIdentification string    `json:"user_identification"`
-	Status             string    `json:"status"`
 }

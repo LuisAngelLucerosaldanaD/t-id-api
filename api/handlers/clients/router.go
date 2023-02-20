@@ -9,7 +9,7 @@ func RouterClients(app *fiber.App, db *sqlx.DB, txID string) {
 	h := handlerWork{DB: db, TxID: txID}
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
-	user := v1.Group("/clients")
+	user := v1.Group("/cligents")
 	user.Get("/validation-workflow/:nit/:request_id/:document_number", h.GetValidationRequest)
 	user.Post("/validation-workflow", h.CreateValidationRequest)
 	user.Get("/:nit", h.getDataClient)
