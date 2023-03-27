@@ -105,9 +105,10 @@ func (s *psql) getAll() ([]*ValidationRequest, error) {
 
 // getByClientIDAndRequestID consulta un registro por su ID
 func (s *psql) getByClientIDAndRequestID(clientIid int64, requestID string) (*ValidationRequest, error) {
-	const psqlGetByClientID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, status, created_at, updated_at FROM cfg.validation_request WHERE client_id = $1 and request_id = $2 limit 1`
+	const psqlGetByClientID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_identification, status, created_at, updated_at FROM cfg.validation_request WHERE client_id = %d and request_id = '%s' limit 1`
 	mdl := ValidationRequest{}
-	err := s.DB.Get(&mdl, psqlGetByClientID, clientIid, requestID)
+	query := fmt.Sprintf(psqlGetByClientID, clientIid, requestID)
+	err := s.DB.Get(&mdl, query)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

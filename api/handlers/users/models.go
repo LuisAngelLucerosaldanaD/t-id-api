@@ -123,7 +123,7 @@ type ReqValidationFace struct {
 	FaceImage      string `json:"face_image"`
 	DocumentNumber int64  `json:"document_number"`
 	Nit            string `json:"nit"`
-	RequestID      string `json:"request_id"`
+	RequestID      string `json:"request-id"`
 }
 
 type ReqWsValidation struct {

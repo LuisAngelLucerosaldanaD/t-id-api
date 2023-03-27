@@ -208,6 +208,12 @@ func (h *handlerWork) GetValidationRequest(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	if requestID == "0" {
+		res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+		res.Error = false
+		return c.Status(http.StatusOK).JSON(res)
+	}
+
 	validationRequest, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, requestID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener la configuracion de la validación de identidad, error: %s", err.Error())
