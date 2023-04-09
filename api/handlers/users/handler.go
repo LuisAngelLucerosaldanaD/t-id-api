@@ -633,8 +633,8 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 			res.Code, res.Type, res.Msg = 22, 1, "No se encontró un cliente con los datos proporcionados"
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
-		nit, _ := strconv.ParseInt(client.Nit, 10, 64)
-		identityReq, code, err = srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(nit, req.RequestID)
+
+		identityReq, code, err = srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, req.RequestID)
 		if err != nil {
 			logger.Error.Printf("No se pudo obtener los datos de la validacion de identidad: %v", err)
 			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener los datos de la validacion de identidad"
