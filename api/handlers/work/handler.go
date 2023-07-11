@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type handlerWork struct {
@@ -143,32 +144,32 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 				{
 					Id:    1,
 					Name:  "Primer Nombre",
-					Value: strings.TrimSpace(user.FirstName),
+					Value: strings.TrimSpace(*user.FirstName),
 				},
 				{
 					Id:    2,
 					Name:  "Segundo Nombre",
-					Value: strings.TrimSpace(user.SecondName),
+					Value: strings.TrimSpace(*user.SecondName),
 				},
 				{
 					Id:    3,
 					Name:  "Primer Apellido",
-					Value: strings.TrimSpace(user.FirstSurname),
+					Value: strings.TrimSpace(*user.FirstSurname),
 				},
 				{
 					Id:    4,
 					Name:  "Segundo Apellido",
-					Value: strings.TrimSpace(user.SecondSurname),
+					Value: strings.TrimSpace(*user.SecondSurname),
 				},
 				{
 					Id:    5,
 					Name:  "Tipo de Documento",
-					Value: user.TypeDocument,
+					Value: *user.TypeDocument,
 				},
 				{
 					Id:    6,
 					Name:  "Número de Documento",
-					Value: strconv.FormatInt(user.DocumentNumber, 10),
+					Value: user.DocumentNumber,
 				},
 				{
 					Id:    7,
@@ -178,12 +179,12 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 				{
 					Id:    8,
 					Name:  "Edad",
-					Value: strconv.Itoa(int(user.Age)),
+					Value: strconv.Itoa(int(*user.Age)),
 				},
 				{
 					Id:    9,
 					Name:  "Sexo",
-					Value: user.Gender,
+					Value: *user.Gender,
 				},
 				{
 					Id:    10,
@@ -198,7 +199,7 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 				{
 					Id:    12,
 					Name:  "Estado Civil",
-					Value: user.CivilStatus,
+					Value: *user.CivilStatus,
 				},
 				{
 					Id:    13,
@@ -208,7 +209,7 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 				{
 					Id:    14,
 					Name:  "Nacionalidad",
-					Value: user.Nationality,
+					Value: *user.Nationality,
 				},
 				{
 					Id:    15,
@@ -233,7 +234,30 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	walletInfo, err := blockchain.CreateAccountAndWallet(models.User(*user), fileS3.Encoding, fileS3.NameDocument)
+	userBk := models.User{
+		ID:             user.ID,
+		TypeDocument:   *user.TypeDocument,
+		DocumentNumber: user.DocumentNumber,
+		ExpeditionDate: user.ExpeditionDate,
+		Email:          user.Email,
+		FirstName:      *user.FirstName,
+		SecondName:     *user.SecondName,
+		SecondSurname:  *user.SecondSurname,
+		Age:            *user.Age,
+		Gender:         *user.Gender,
+		Nationality:    *user.Nationality,
+		CivilStatus:    *user.CivilStatus,
+		FirstSurname:   *user.FirstSurname,
+		BirthDate:      user.BirthDate,
+		Country:        *user.Country,
+		Department:     *user.Department,
+		City:           *user.City,
+		RealIp:         user.RealIp,
+		CreatedAt:      time.Time{},
+		UpdatedAt:      time.Time{},
+	}
+
+	walletInfo, err := blockchain.CreateAccountAndWallet(userBk, fileS3.Encoding, fileS3.NameDocument)
 	if err != nil {
 		logger.Error.Printf("No se pudo crear el usuario en OnlyOne, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
@@ -268,7 +292,7 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fullName := strings.TrimSpace(user.FirstName + " " + user.SecondName + " " + user.FirstSurname + " " + user.SecondSurname)
+	fullName := strings.TrimSpace(*user.FirstName + " " + *user.SecondName + " " + *user.FirstSurname + " " + *user.SecondSurname)
 
 	param["TEMPLATE-PATH"] = e.Template.WalletMail
 	param["FULL_NAME"] = fullName

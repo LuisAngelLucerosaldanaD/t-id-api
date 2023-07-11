@@ -211,7 +211,7 @@ func (h *handlerUser) registerBasicInformation(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.UpdateUsers(req.Id, req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, req.FirstName, req.SecondName, req.SecondSurname, req.Age, req.Gender, req.Nationality, req.CivilStatus, req.FirstSurname, req.BirthDate, req.Country, req.Department, req.City, c.IP())
+	user, code, err := srvAuth.SrvUser.UpdateUsers(req.Id, &req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, &req.FirstName, &req.SecondName, &req.SecondSurname, &req.Age, &req.Gender, &req.Nationality, &req.CivilStatus, &req.FirstSurname, req.BirthDate, &req.Country, &req.Department, &req.City, c.IP(), "")
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -270,7 +270,7 @@ func (h *handlerUser) createUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.CreateUsers(uuid.New().String(), req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, req.FirstName, req.SecondName, req.SecondSurname, req.Age, req.Gender, req.Nationality, req.CivilStatus, req.FirstSurname, req.BirthDate, req.Country, req.Department, req.City, c.IP())
+	user, code, err := srvAuth.SrvUser.CreateUsers(uuid.New().String(), &req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, &req.FirstName, &req.SecondName, &req.SecondSurname, &req.Age, &req.Gender, &req.Nationality, &req.CivilStatus, &req.FirstSurname, req.BirthDate, &req.Country, &req.Department, &req.City, c.IP(), "")
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -401,23 +401,23 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 
 	res.Data = &UserValidation{
 		ID:               user.ID,
-		TypeDocument:     user.TypeDocument,
+		TypeDocument:     *user.TypeDocument,
 		DocumentNumber:   user.DocumentNumber,
 		ExpeditionDate:   user.ExpeditionDate,
 		Email:            user.Email,
-		FirstName:        user.FirstName,
-		SecondName:       user.SecondName,
-		SecondSurname:    user.SecondSurname,
-		Age:              user.Age,
-		Gender:           user.Gender,
-		Nationality:      user.Nationality,
-		CivilStatus:      user.CivilStatus,
-		FirstSurname:     user.FirstSurname,
+		FirstName:        *user.FirstName,
+		SecondName:       *user.SecondName,
+		SecondSurname:    *user.SecondSurname,
+		Age:              *user.Age,
+		Gender:           *user.Gender,
+		Nationality:      *user.Nationality,
+		CivilStatus:      *user.CivilStatus,
+		FirstSurname:     *user.FirstSurname,
 		BirthDate:        user.BirthDate,
-		Country:          user.Country,
+		Country:          *user.Country,
 		TransactionId:    transactionID,
-		Department:       user.Department,
-		City:             user.City,
+		Department:       *user.Department,
+		City:             *user.City,
 		SelfieImg:        selfieImg,
 		BackDocumentImg:  backDocument,
 		FrontDocumentImg: frontDocument,
@@ -488,10 +488,10 @@ func (h *handlerUser) getLastedUsers(c *fiber.Ctx) error {
 		res.Data = append(res.Data, &UserStatus{
 			ID:            user.ID,
 			Email:         user.Email,
-			FirstName:     user.FirstName,
-			SecondName:    user.SecondName,
-			SecondSurname: user.SecondSurname,
-			FirstSurname:  user.FirstSurname,
+			FirstName:     *user.FirstName,
+			SecondName:    *user.SecondName,
+			SecondSurname: *user.SecondSurname,
+			FirstSurname:  *user.FirstSurname,
 			Status:        validation.Status,
 			UpdatedAt:     user.UpdatedAt,
 		})
@@ -729,7 +729,7 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 
 	reqWs := ReqWsValidation{
 		UserId:         "",
-		DocumentNumber: strconv.FormatInt(user.DocumentNumber, 10),
+		DocumentNumber: user.DocumentNumber,
 		ValidatedAt:    time.Now().UTC().String(),
 		ValidatorId:    "",
 		RequestId:      req.RequestID,

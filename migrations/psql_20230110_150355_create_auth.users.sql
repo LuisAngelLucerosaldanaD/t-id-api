@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS auth.users(
     birth_date TIMESTAMP NULL,
     country VARCHAR (100) NULL,
     department VARCHAR (100) NULL,
+    cellphone VARCHAR (15) NULL,
     city VARCHAR (100) NULL,
     real_ip VARCHAR (50) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),

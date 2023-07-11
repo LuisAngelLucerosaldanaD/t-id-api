@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	grpcMetadata "google.golang.org/grpc/metadata"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -152,12 +151,12 @@ func CreateAccountAndWallet(user models.User, fileB64 string, fileName string) (
 	resUser, err := clientUser.CreateUserBySystem(ctx, &users_proto.RequestCreateUserBySystem{
 		Nickname:      user.FirstName + user.FirstSurname,
 		Email:         user.Email,
-		Password:      user.FirstName + strconv.FormatInt(user.DocumentNumber, 10),
+		Password:      user.FirstName + user.DocumentNumber,
 		FullPathPhoto: "",
 		Name:          strings.TrimSpace(user.FirstName + " " + user.SecondName),
 		Lastname:      strings.TrimSpace(user.FirstSurname + " " + user.SecondSurname),
 		IdType:        8,
-		IdNumber:      strconv.FormatInt(user.DocumentNumber, 10),
+		IdNumber:      user.DocumentNumber,
 		Cellphone:     "",
 		BirthDate:     user.BirthDate.Format("2006-01-02T15:04:05.000Z"),
 	})

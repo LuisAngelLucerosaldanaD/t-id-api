@@ -35,7 +35,7 @@ type reqUploadDocument struct {
 type requestValidateIdentity struct {
 	Id             string     `json:"id"`
 	TypeDocument   string     `json:"type_document"`
-	DocumentNumber int64      `json:"document_number"`
+	DocumentNumber string     `json:"document_number"`
 	ExpeditionDate *time.Time `json:"expedition_date"`
 	Email          string     `json:"email"`
 	FirstName      string     `json:"first_name"`
@@ -63,7 +63,7 @@ type resGetUserSession struct {
 type UserValidation struct {
 	ID               string     `json:"id"`
 	TypeDocument     string     `json:"type_document"`
-	DocumentNumber   int64      `json:"document_number"`
+	DocumentNumber   string     `json:"document_number"`
 	ExpeditionDate   *time.Time `json:"expedition_date"`
 	Email            string     `json:"email"`
 	FirstName        string     `json:"first_name"`

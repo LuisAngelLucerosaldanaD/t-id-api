@@ -7,7 +7,7 @@ import (
 type User struct {
 	ID             string     `json:"id" db:"id" valid:"required,uuid"`
 	TypeDocument   string     `json:"type_document" db:"type_document" valid:"-"`
-	DocumentNumber int64      `json:"document_number" db:"document_number" valid:"-"`
+	DocumentNumber string     `json:"document_number" db:"document_number" valid:"-"`
 	ExpeditionDate *time.Time `json:"expedition_date" db:"expedition_date" valid:"-"`
 	Email          string     `json:"email" db:"email" valid:"required"`
 	FirstName      string     `json:"first_name" db:"first_name" valid:"-"`

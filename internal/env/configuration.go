@@ -22,6 +22,7 @@ type configuration struct {
 	Blockchain  Blockchain  `json:"blockchain"`
 	AuthService AuthService `json:"auth_service"`
 	FaceApi     FaceApi     `json:"face_api"`
+	OnlyOne     OnlyOne     `json:"only_one"`
 }
 
 type App struct {
@@ -31,7 +32,6 @@ type App struct {
 	PathLog           string `json:"path_log"`
 	LogReviewInterval int    `json:"log_review_interval"`
 	EcdsaPrivateKey   string `json:"ecdsa_private_key"`
-	RegisterLog       bool   `json:"register_log"`
 	RSAPublicKey      string `json:"rsa_public_key"`
 	LoggerHttp        bool   `json:"logger_http"`
 	Language          string `json:"language"`
@@ -52,8 +52,6 @@ type DB struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
 	Instance string `json:"instance"`
-	IsSecure bool   `json:"is_secure"`
-	SSLMode  string `json:"ssl_mode"`
 }
 
 type SendGrid struct {
@@ -65,9 +63,7 @@ type SendGrid struct {
 type Files struct {
 	Repo string `json:"repo"`
 	S3   struct {
-		Bucket     string `json:"bucket"`
-		BucketSign string `json:"bucket_sign"`
-		Region     string `json:"region"`
+		Bucket string `json:"bucket"`
 	} `json:"s3"`
 }
 
@@ -91,6 +87,11 @@ type AuthService struct {
 
 type FaceApi struct {
 	CompareFace string `json:"compare_face"`
+}
+
+type OnlyOne struct {
+	Url        string `json:"url"`
+	Onboarding string `json:"onboarding"`
 }
 
 func NewConfiguration() *configuration {

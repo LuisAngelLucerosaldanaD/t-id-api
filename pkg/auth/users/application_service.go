@@ -10,8 +10,8 @@ import (
 )
 
 type PortsServerUsers interface {
-	CreateUsers(id string, typeDocument string, documentNumber int64, expeditionDate *time.Time, email string, firstName string, secondName string, secondSurname string, age int32, gender string, nationality string, civilStatus string, firstSurname string, birthDate *time.Time, country string, department string, city string, realIp string) (*Users, int, error)
-	UpdateUsers(id string, typeDocument string, documentNumber int64, expeditionDate *time.Time, email string, firstName string, secondName string, secondSurname string, age int32, gender string, nationality string, civilStatus string, firstSurname string, birthDate *time.Time, country string, department string, city string, realIp string) (*Users, int, error)
+	CreateUsers(id string, typeDocument *string, documentNumber string, expeditionDate *time.Time, email string, firstName *string, secondName *string, secondSurname *string, age *int32, gender *string, nationality *string, civilStatus *string, firstSurname *string, birthDate *time.Time, country *string, department *string, city *string, realIp string, cellphone string) (*Users, int, error)
+	UpdateUsers(id string, typeDocument *string, documentNumber string, expeditionDate *time.Time, email string, firstName *string, secondName *string, secondSurname *string, age *int32, gender *string, nationality *string, civilStatus *string, firstSurname *string, birthDate *time.Time, country *string, department *string, city *string, realIp string, cellphone string) (*Users, int, error)
 	DeleteUsers(id string) (int, error)
 	GetUsersByID(id string) (*Users, int, error)
 	GetAllUsers() ([]*Users, error)
@@ -32,8 +32,8 @@ func NewUsersService(repository ServicesUsersRepository, user *models.User, TxID
 	return &service{repository: repository, user: user, txID: TxID}
 }
 
-func (s *service) CreateUsers(id string, typeDocument string, documentNumber int64, expeditionDate *time.Time, email string, firstName string, secondName string, secondSurname string, age int32, gender string, nationality string, civilStatus string, firstSurname string, birthDate *time.Time, country string, department string, city string, realIp string) (*Users, int, error) {
-	m := NewUsers(id, typeDocument, documentNumber, expeditionDate, email, firstName, secondName, secondSurname, age, gender, nationality, civilStatus, firstSurname, birthDate, country, department, city, realIp)
+func (s *service) CreateUsers(id string, typeDocument *string, documentNumber string, expeditionDate *time.Time, email string, firstName *string, secondName *string, secondSurname *string, age *int32, gender *string, nationality *string, civilStatus *string, firstSurname *string, birthDate *time.Time, country *string, department *string, city *string, realIp string, cellphone string) (*Users, int, error) {
+	m := NewUsers(id, typeDocument, documentNumber, expeditionDate, email, firstName, secondName, secondSurname, age, gender, nationality, civilStatus, firstSurname, birthDate, country, department, city, realIp, cellphone)
 	if valid, err := m.valid(); !valid {
 		logger.Error.Println(s.txID, " - don't meet validations:", err)
 		return m, 15, err
@@ -49,8 +49,8 @@ func (s *service) CreateUsers(id string, typeDocument string, documentNumber int
 	return m, 29, nil
 }
 
-func (s *service) UpdateUsers(id string, typeDocument string, documentNumber int64, expeditionDate *time.Time, email string, firstName string, secondName string, secondSurname string, age int32, gender string, nationality string, civilStatus string, firstSurname string, birthDate *time.Time, country string, department string, city string, realIp string) (*Users, int, error) {
-	m := NewUsers(id, typeDocument, documentNumber, expeditionDate, email, firstName, secondName, secondSurname, age, gender, nationality, civilStatus, firstSurname, birthDate, country, department, city, realIp)
+func (s *service) UpdateUsers(id string, typeDocument *string, documentNumber string, expeditionDate *time.Time, email string, firstName *string, secondName *string, secondSurname *string, age *int32, gender *string, nationality *string, civilStatus *string, firstSurname *string, birthDate *time.Time, country *string, department *string, city *string, realIp string, cellphone string) (*Users, int, error) {
+	m := NewUsers(id, typeDocument, documentNumber, expeditionDate, email, firstName, secondName, secondSurname, age, gender, nationality, civilStatus, firstSurname, birthDate, country, department, city, realIp, cellphone)
 	if valid, err := m.valid(); !valid {
 		logger.Error.Println(s.txID, " - don't meet validations:", err)
 		return m, 15, err
