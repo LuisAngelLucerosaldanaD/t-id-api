@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS auth.onboarding(
     client_id BIGINT  NOT NULL,
     request_id VARCHAR (255) NOT NULL,
     user_id VARCHAR (50) NOT NULL,
+    status varchar (50) not null,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now()
 );

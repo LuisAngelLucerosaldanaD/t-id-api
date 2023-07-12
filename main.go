@@ -23,6 +23,8 @@ import (
 // @tag.description Métodos referentes al trabajo registrado
 // @tag.name Client
 // @tag.description Métodos referentes al cliente
+// @tag.name Onboarding
+// @tag.description Métodos referentes al enrolamiento del usuario
 // @BasePath /
 func main() {
 	c := env.NewConfiguration()

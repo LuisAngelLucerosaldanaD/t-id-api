@@ -1,6 +1,7 @@
 package onboarding
 
 import (
+	"check-id-api/internal/aws_ia"
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/msg"
@@ -8,6 +9,8 @@ import (
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
 	"check-id-api/pkg/wf"
+	"encoding/base64"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -22,7 +25,7 @@ type handlerOnboarding struct {
 // Onboarding godoc
 // @Summary Método que permite iniciar el enrolamiento de un usuario
 // @Description Método que permite iniciar el enrolamiento de un usuario que puede ser desde un tercero o desde el mismo sistema
-// @tags onboarding
+// @tags Onboarding
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
@@ -72,14 +75,14 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvAuth.SrvOnboarding.CreateOnboarding(uuid.New().String(), req.ClientId, req.RequestId, user.ID)
+	onboarding, code, err := srvAuth.SrvOnboarding.CreateOnboarding(uuid.New().String(), req.ClientId, req.RequestId, user.ID, "started")
 	if err != nil {
 		logger.Error.Printf("couldn't create onboarding, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + user.ID + "/" + req.Email
+	res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("%s/%s/%s", onboarding.ID, user.ID, req.Email)
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
@@ -88,24 +91,51 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 // FinishOnboarding godoc
 // @Summary Método que permite terminar el enrolamiento de un usuario
 // @Description Método que permite terminar el enrolamiento de un usuario que ha sido validado desde OnlyOne
-// @tags onboarding
+// @tags Onboarding
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param resCreateOnboarding body resCreateOnboarding true "Datos para el enrolamiento del usuario"
-// @Success 200 {object} resCreateOnboarding
+// @Param RequestProcessOnboarding body RequestProcessOnboarding true "Datos para validar el enrolamiento del usuario"
+// @Success 200 {object} ResProcessOnboarding
 // @Router /api/v1/onboarding/process [post]
 func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
-	res := resCreateOnboarding{Error: true}
+	res := ResProcessOnboarding{Error: true}
 	req := RequestProcessOnboarding{}
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
 	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
 	if err != nil {
 		logger.Error.Printf("couldn't bind model create wallets: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	selfieBytes, err := base64.StdEncoding.DecodeString(req.Selfie)
+	if err != nil {
+		logger.Error.Printf("couldn't decode selfie: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentFrontBytes, err := base64.StdEncoding.DecodeString(req.DocumentFront)
+	if err != nil {
+		logger.Error.Printf("couldn't decode document front: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	resp, err := aws_ia.CompareFacesV2(selfieBytes, documentFrontBytes)
+	if err != nil {
+		logger.Error.Printf("couldn't decode identity: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if !resp {
+		res.Code, res.Type, res.Msg = 109, 1, "La persona no coincide con su documento de identidad"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -168,11 +198,37 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvWf.SrvWork.CreateWorkValidation("pending", req.UserID)
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de identidad", "success", "Validación de identidad aprobada", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvWf.SrvWork.CreateWorkValidation("finished", req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't start work, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByID(req.Onboarding)
+	if err != nil {
+		logger.Error.Printf("couldn't get onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.ID, "pending")
+	if err != nil {
+		logger.Error.Printf("couldn't create onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 

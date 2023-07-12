@@ -12,16 +12,18 @@ type Onboarding struct {
 	ClientId  int64     `json:"client_id" db:"client_id" valid:"required"`
 	RequestId string    `json:"request_id" db:"request_id" valid:"required"`
 	UserId    string    `json:"user_id" db:"user_id" valid:"required"`
+	Status    string    `json:"status" db:"status" valid:"required"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
-func NewOnboarding(id string, clientId int64, requestId string, userId string) *Onboarding {
+func NewOnboarding(id string, clientId int64, requestId string, userId string, status string) *Onboarding {
 	return &Onboarding{
 		ID:        id,
 		ClientId:  clientId,
 		RequestId: requestId,
 		UserId:    userId,
+		Status:    status,
 	}
 }
 

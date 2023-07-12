@@ -26,4 +26,13 @@ type RequestProcessOnboarding struct {
 	Selfie        string `json:"selfie"`
 	DocumentFront string `json:"document_front"`
 	DocumentBack  string `json:"document_back"`
+	Onboarding    string `json:"onboarding"`
+}
+
+type ResProcessOnboarding struct {
+	Error bool        `json:"error"`
+	Data  interface{} `json:"data"`
+	Code  int         `json:"code"`
+	Type  int         `json:"type"`
+	Msg   string      `json:"msg"`
 }

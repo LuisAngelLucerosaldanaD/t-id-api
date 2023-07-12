@@ -21,6 +21,19 @@ definitions:
       url_redirect:
         type: string
     type: object
+  clients.ReqCreateWorkflow:
+    properties:
+      expired_at:
+        type: string
+      max_num_validation:
+        type: integer
+      nit:
+        type: string
+      request_id:
+        type: string
+      user_identification:
+        type: string
+    type: object
   clients.ResAnny:
     properties:
       code:
@@ -39,6 +52,44 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/clients.Client'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  onboarding.RequestProcessOnboarding:
+    properties:
+      document_back:
+        type: string
+      document_front:
+        type: string
+      onboarding:
+        type: string
+      selfie:
+        type: string
+      user_id:
+        type: string
+    type: object
+  onboarding.ResProcessOnboarding:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  onboarding.resCreateOnboarding:
+    properties:
+      code:
+        type: integer
+      data:
+        type: string
       error:
         type: boolean
       msg:
@@ -93,6 +144,10 @@ definitions:
         type: integer
       face_image:
         type: string
+      nit:
+        type: string
+      request-id:
+        type: string
     type: object
   users.UserStatus:
     properties:
@@ -132,7 +187,7 @@ definitions:
       department:
         type: string
       document_number:
-        type: integer
+        type: string
       email:
         type: string
       expedition_date:
@@ -168,6 +223,8 @@ definitions:
         type: integer
       birth_date:
         type: string
+      cellphone:
+        type: string
       city:
         type: string
       civil_status:
@@ -179,7 +236,7 @@ definitions:
       department:
         type: string
       document_number:
-        type: integer
+        type: string
       email:
         type: string
       expedition_date:
@@ -236,7 +293,7 @@ definitions:
       department:
         type: string
       document_number:
-        type: integer
+        type: string
       email:
         type: string
       expedition_date:
@@ -445,6 +502,64 @@ paths:
       summary: Obtiene la data del cliente
       tags:
       - Client
+  /api/v1/onboarding/:
+    post:
+      consumes:
+      - application/json
+      description: Método que permite iniciar el enrolamiento de un usuario que puede
+        ser desde un tercero o desde el mismo sistema
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Datos para el enrolamiento del usuario
+        in: body
+        name: resCreateOnboarding
+        required: true
+        schema:
+          $ref: '#/definitions/onboarding.resCreateOnboarding'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/onboarding.resCreateOnboarding'
+      summary: Método que permite iniciar el enrolamiento de un usuario
+      tags:
+      - Onboarding
+  /api/v1/onboarding/process:
+    post:
+      consumes:
+      - application/json
+      description: Método que permite terminar el enrolamiento de un usuario que ha
+        sido validado desde OnlyOne
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Datos para validar el enrolamiento del usuario
+        in: body
+        name: RequestProcessOnboarding
+        required: true
+        schema:
+          $ref: '#/definitions/onboarding.RequestProcessOnboarding'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/onboarding.ResProcessOnboarding'
+      summary: Método que permite terminar el enrolamiento de un usuario
+      tags:
+      - Onboarding
   /api/v1/traceability/user-session/{userID}:
     get:
       consumes:
@@ -729,6 +844,71 @@ paths:
       summary: Verifica la identidad de un usuario
       tags:
       - User
+  /api/v1/validation-workflow:
+    post:
+      consumes:
+      - application/json
+      description: Método para crear el flujo de validación de identidad
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Datos para creación del flujo
+        in: body
+        name: ReqCreateWorkflow
+        required: true
+        schema:
+          $ref: '#/definitions/clients.ReqCreateWorkflow'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/clients.ResAnny'
+      summary: Crea el flujo de validación de identidad
+      tags:
+      - Client
+  /api/v1/validation-workflow/{nit}/{request_id}/{document_number}:
+    get:
+      consumes:
+      - application/json
+      description: Método para obtener el flujo de validación de identidad de un usuario
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: NIT del cliente
+        in: path
+        name: nit
+        required: true
+        type: string
+      - description: Número de solicitud
+        in: path
+        name: request_id
+        required: true
+        type: string
+      - description: Número de identificación del usuario
+        in: path
+        name: document_number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/clients.ResAnny'
+      summary: Obtiene el flujo de validación de un usuario
+      tags:
+      - Client
   /api/v1/work/accept:
     post:
       consumes:
@@ -820,3 +1000,5 @@ tags:
   name: Work
 - description: Métodos referentes al cliente
   name: Client
+- description: Métodos referentes al enrolamiento del usuario
+  name: Onboarding
