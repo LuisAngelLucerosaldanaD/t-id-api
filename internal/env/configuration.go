@@ -38,6 +38,7 @@ type App struct {
 	TLS               bool   `json:"tls"`
 	Cert              string `json:"cert"`
 	Key               string `json:"key"`
+	UrlPersons        string `json:"url_persons"`
 }
 
 type Template struct {

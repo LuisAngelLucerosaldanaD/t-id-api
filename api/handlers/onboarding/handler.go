@@ -2,9 +2,13 @@ package onboarding
 
 import (
 	"check-id-api/internal/aws_ia"
+	"check-id-api/internal/blockchain"
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/msg"
+	"check-id-api/internal/persons"
+	"check-id-api/internal/send_grid"
+	"check-id-api/internal/template"
 	"check-id-api/pkg/auth"
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
@@ -14,7 +18,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"net/http"
+	"strings"
+	"time"
 )
 
 type handlerOnboarding struct {
@@ -105,6 +112,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	e := env.NewConfiguration()
 
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -139,6 +147,19 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	user, code, err := srvAuth.SrvUser.GetUsersByID(req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't get user by identity number, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		logger.Error.Printf("couldn't get user by identity number")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
 	f, err := srvCfg.SrvFilesS3.UploadFile(req.UserID, req.UserID+"_selfie.jpg", req.Selfie)
 	if err != nil {
 		logger.Error.Printf("couldn't upload file s3: %v", err)
@@ -146,7 +167,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err := srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create selfie image, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -198,21 +219,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de identidad", "success", "Validación de identidad aprobada", req.UserID)
-	if err != nil {
-		logger.Error.Printf("couldn't create traceability, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvWf.SrvWork.CreateWorkValidation("finished", req.UserID)
-	if err != nil {
-		logger.Error.Printf("couldn't start work, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		res.Msg = err.Error()
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
 	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByID(req.Onboarding)
 	if err != nil {
 		logger.Error.Printf("couldn't get onboarding, error: %v", err)
@@ -230,6 +236,116 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		logger.Error.Printf("couldn't create onboarding, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	personSrv := persons.Persons{IdentityNumber: user.DocumentNumber}
+	basicData, err := personSrv.GetPersonByIdentityNumber()
+	if err != nil {
+		logger.Error.Printf("couldn't get basic data of person, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	birthDate, _ := time.Parse("02/01/2006", basicData.BirthDate)
+	expeditionDate, _ := time.Parse("02/01/2006", basicData.ExpeditionDate)
+	age := int32(time.Now().Year() - birthDate.Year())
+
+	user, code, err = srvAuth.SrvUser.UpdateUsers(user.ID, nil, user.DocumentNumber, &expeditionDate,
+		user.Email, &basicData.FirstName, &basicData.SecondName, &basicData.SecondSurname, &age, &basicData.Gender,
+		user.Nationality, nil, &basicData.Surname, &birthDate, nil, nil, nil, user.RealIp, user.Cellphone)
+	if err != nil {
+		logger.Error.Printf("couldn't update basic data of user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	walletInfo, err := blockchain.CreateAccountAndWallet(user, req.Selfie, req.UserID+"_selfie.jpg")
+	if err != nil {
+		logger.Error.Printf("No se pudo crear el usuario en OnlyOne, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	description := "Validación de identidad del usuario"
+	trxId, err := blockchain.CreateTransactionV2(user, "Validación de identidad", description, walletInfo.Id, "")
+	if err != nil {
+		logger.Error.Printf("No se pudo consultar el usuario, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvAuth.SrvValidationUsers.CreateValidationUsers(uuid.New().String(), trxId, req.UserID)
+	if err != nil {
+		logger.Error.Printf("No se pudo registrar el id de la transacción, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de identidad", "success", "Validación de identidad aprobada", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvWf.SrvWork.CreateWorkValidation("finished", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't start work, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fullName := strings.TrimSpace(*user.FirstName + " " + *user.SecondName + " " + *user.FirstSurname + " " + *user.SecondSurname)
+	param := make(map[string]string)
+	var mailAttachment []*mail.Attachment
+	param["TEMPLATE-PATH"] = e.Template.WalletMail
+	param["FULL_NAME"] = fullName
+	param["WALLET_ID"] = walletInfo.Id
+
+	body, err := template.GenerateTemplateMail(param)
+	if err != nil {
+		logger.Error.Printf("couldn't generate body in NotificationEmail: %v", err)
+	}
+
+	filePrivate := mail.NewAttachment()
+	filePrivate.SetContent(base64.StdEncoding.EncodeToString([]byte(walletInfo.Private)))
+	filePrivate.SetType("text/plain")
+	filePrivate.SetFilename("private.pem")
+	filePrivate.SetDisposition("attachment")
+	mailAttachment = append(mailAttachment, filePrivate)
+
+	filePublic := mail.NewAttachment()
+	filePublic.SetContent(base64.StdEncoding.EncodeToString([]byte(walletInfo.Public)))
+	filePublic.SetType("text/plain")
+	filePublic.SetFilename("public.pem")
+	filePublic.SetDisposition("attachment")
+	mailAttachment = append(mailAttachment, filePublic)
+
+	fileMnemonic := mail.NewAttachment()
+	fileMnemonic.SetContent(base64.StdEncoding.EncodeToString([]byte(walletInfo.Mnemonic)))
+	fileMnemonic.SetType("text/plain")
+	fileMnemonic.SetFilename("mnemonic.txt")
+	fileMnemonic.SetDisposition("attachment")
+	mailAttachment = append(mailAttachment, fileMnemonic)
+
+	emailSd := send_grid.Model{
+		FromMail: e.SendGrid.FromMail,
+		FromName: e.SendGrid.FromName,
+		Tos: []send_grid.To{
+			{
+				Name: fullName,
+				Mail: user.Email,
+			},
+		},
+		Subject:     "Certificados públicos y privados OnlyOne",
+		HTMLContent: body,
+		Attachments: mailAttachment,
+	}
+
+	err = emailSd.SendMail()
+	if err != nil {
+		logger.Error.Println(h.TxID, " - error al enviar el correo con las credenciales de la wallet: %s", err.Error())
 	}
 
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)

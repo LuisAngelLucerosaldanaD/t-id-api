@@ -8,8 +8,8 @@ import (
 	"check-id-api/internal/grpc/users_proto"
 	"check-id-api/internal/grpc/wallet_proto"
 	"check-id-api/internal/logger"
-	"check-id-api/internal/models"
 	"check-id-api/internal/ws"
+	"check-id-api/pkg/auth/users"
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	grpcMetadata "google.golang.org/grpc/metadata"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -58,13 +59,12 @@ func CreateTransaction(identifier []Identifier, nameTransaction, descriptionTran
 	dataBytes, _ := json.Marshal(dataTrx)
 
 	transactionRq := Transaction{
-		From:           e.Blockchain.Wallet,
-		To:             to,
-		TypeId:         18,
-		Amount:         1,
-		IdentityNumber: identityNumber,
-		Files:          []*File{},
-		Data:           string(dataBytes),
+		From:   e.Blockchain.Wallet,
+		To:     to,
+		TypeId: 18,
+		Amount: 1,
+		Files:  []*File{},
+		Data:   string(dataBytes),
 	}
 
 	token := GetToken(e.Blockchain.UrlAuth, e.Blockchain.Email, e.Blockchain.Password)
@@ -82,7 +82,8 @@ func CreateTransaction(identifier []Identifier, nameTransaction, descriptionTran
 	}
 
 	headers := map[string]string{
-		"sign": signValue,
+		"sign":            signValue,
+		"identity_number": identityNumber,
 	}
 
 	rs, codeHTTP, err := ws.ConsumeWS(bodyRq, e.Blockchain.UrlApi, "POST", token, &headers)
@@ -111,7 +112,157 @@ func CreateTransaction(identifier []Identifier, nameTransaction, descriptionTran
 	return resData.Id, nil
 }
 
-func CreateAccountAndWallet(user models.User, fileB64 string, fileName string) (*WalletInfo, error) {
+func CreateTransactionV2(user *users.Users, nameTransaction, descriptionTransaction, to, identityNumber string) (string, error) {
+
+	identifier := []Identifier{
+		{
+			Name: "Información básica",
+			Attributes: []Attribute{
+				{
+					Id:    1,
+					Name:  "Primer Nombre",
+					Value: strings.TrimSpace(*user.FirstName),
+				},
+				{
+					Id:    2,
+					Name:  "Segundo Nombre",
+					Value: strings.TrimSpace(*user.SecondName),
+				},
+				{
+					Id:    3,
+					Name:  "Primer Apellido",
+					Value: strings.TrimSpace(*user.FirstSurname),
+				},
+				{
+					Id:    4,
+					Name:  "Segundo Apellido",
+					Value: strings.TrimSpace(*user.SecondSurname),
+				},
+				{
+					Id:    5,
+					Name:  "Tipo de Documento",
+					Value: *user.TypeDocument,
+				},
+				{
+					Id:    6,
+					Name:  "Número de Documento",
+					Value: user.DocumentNumber,
+				},
+				{
+					Id:    7,
+					Name:  "Correo Electrónico",
+					Value: user.Email,
+				},
+				{
+					Id:    8,
+					Name:  "Edad",
+					Value: strconv.Itoa(int(*user.Age)),
+				},
+				{
+					Id:    9,
+					Name:  "Sexo",
+					Value: *user.Gender,
+				},
+				{
+					Id:    10,
+					Name:  "Fecha de Nacimiento",
+					Value: user.BirthDate.String(),
+				},
+				{
+					Id:    11,
+					Name:  "Fecha de Expedición del Documento",
+					Value: user.ExpeditionDate.UTC().String(),
+				},
+				{
+					Id:    12,
+					Name:  "IP de Dispositivo",
+					Value: user.RealIp,
+				},
+				{
+					Id:    13,
+					Name:  "Nacionalidad",
+					Value: *user.Nationality,
+				},
+				{
+					Id:    14,
+					Name:  "Fecha de Creación",
+					Value: user.CreatedAt.UTC().String(),
+				},
+			},
+		},
+	}
+
+	e := env.NewConfiguration()
+	res := ResponseCreateTransaction{}
+	resData := DataResponseCreateTransaction{}
+	dataTrx := DataCreateTransaction{
+		Category:    "2e59a864-b7ff-45d9-be8c-7d1b9513f7c5",
+		Name:        nameTransaction,
+		Description: descriptionTransaction,
+		Identifiers: identifier,
+		Type:        1,
+		Id:          uuid.New().String(),
+		Status:      "active",
+		CreatedAt:   time.Now().String(),
+	}
+
+	dataBytes, _ := json.Marshal(dataTrx)
+
+	transactionRq := Transaction{
+		From:   e.Blockchain.Wallet,
+		To:     to,
+		TypeId: 18,
+		Amount: 1,
+		Files:  []*File{},
+		Data:   string(dataBytes),
+	}
+
+	token := GetToken(e.Blockchain.UrlAuth, e.Blockchain.Email, e.Blockchain.Password)
+
+	bodyRq, err := json.Marshal(transactionRq)
+	if err != nil {
+		logger.Error.Println("couldn't bind request", err)
+		return "", err
+	}
+
+	hash := ciphers.StringToHashSha256(string(dataBytes))
+	signValue, err := ciphers.SignWithEcdsa([]byte(hash), *privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	headers := map[string]string{
+		"sign":            signValue,
+		"identity_number": identityNumber,
+	}
+
+	rs, codeHTTP, err := ws.ConsumeWS(bodyRq, e.Blockchain.UrlApi, "POST", token, &headers)
+	if err := json.Unmarshal(rs, &res); err != nil {
+		logger.Error.Println("don't bind response in struct", err)
+		return "", err
+	}
+	if codeHTTP != 200 {
+		err = errors.New(fmt.Sprintf("respuesta diferente a http 200, %d", codeHTTP))
+		return "", err
+	}
+	if res.Error {
+		err = errors.New(fmt.Sprintf("respuesta con error, %d", res.Code))
+		return "", err
+	}
+	if res.Data == nil {
+		return "", err
+	}
+
+	byteData, _ := json.Marshal(res.Data)
+	err = json.Unmarshal(byteData, &resData)
+	if err != nil {
+		logger.Error.Println("couldn't bind response un Unmarshal", err)
+		return "", err
+	}
+	return resData.Id, nil
+}
+
+func CreateAccountAndWallet(user *users.Users, fileB64 string, fileName string) (*WalletInfo, error) {
 	e := env.NewConfiguration()
 
 	connAuth, err := grpc.Dial(e.AuthService.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -149,12 +300,12 @@ func CreateAccountAndWallet(user models.User, fileB64 string, fileName string) (
 	ctx := grpcMetadata.AppendToOutgoingContext(context.Background(), "authorization", resAuth.Data.AccessToken)
 
 	resUser, err := clientUser.CreateUserBySystem(ctx, &users_proto.RequestCreateUserBySystem{
-		Nickname:      user.FirstName + user.FirstSurname,
+		Nickname:      *user.FirstName + *user.FirstSurname,
 		Email:         user.Email,
-		Password:      user.FirstName + user.DocumentNumber,
+		Password:      *user.FirstName + user.DocumentNumber,
 		FullPathPhoto: "",
-		Name:          strings.TrimSpace(user.FirstName + " " + user.SecondName),
-		Lastname:      strings.TrimSpace(user.FirstSurname + " " + user.SecondSurname),
+		Name:          strings.TrimSpace(*user.FirstName + " " + *user.SecondName),
+		Lastname:      strings.TrimSpace(*user.FirstSurname + " " + *user.SecondSurname),
 		IdType:        8,
 		IdNumber:      user.DocumentNumber,
 		Cellphone:     "",

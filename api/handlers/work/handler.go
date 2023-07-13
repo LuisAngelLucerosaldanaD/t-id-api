@@ -4,7 +4,6 @@ import (
 	"check-id-api/internal/blockchain"
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
-	"check-id-api/internal/models"
 	"check-id-api/internal/msg"
 	"check-id-api/internal/send_grid"
 	"check-id-api/internal/template"
@@ -20,7 +19,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type handlerWork struct {
@@ -234,30 +232,7 @@ func (h *handlerWork) acceptUserData(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	userBk := models.User{
-		ID:             user.ID,
-		TypeDocument:   *user.TypeDocument,
-		DocumentNumber: user.DocumentNumber,
-		ExpeditionDate: user.ExpeditionDate,
-		Email:          user.Email,
-		FirstName:      *user.FirstName,
-		SecondName:     *user.SecondName,
-		SecondSurname:  *user.SecondSurname,
-		Age:            *user.Age,
-		Gender:         *user.Gender,
-		Nationality:    *user.Nationality,
-		CivilStatus:    *user.CivilStatus,
-		FirstSurname:   *user.FirstSurname,
-		BirthDate:      user.BirthDate,
-		Country:        *user.Country,
-		Department:     *user.Department,
-		City:           *user.City,
-		RealIp:         user.RealIp,
-		CreatedAt:      time.Time{},
-		UpdatedAt:      time.Time{},
-	}
-
-	walletInfo, err := blockchain.CreateAccountAndWallet(userBk, fileS3.Encoding, fileS3.NameDocument)
+	walletInfo, err := blockchain.CreateAccountAndWallet(user, fileS3.Encoding, fileS3.NameDocument)
 	if err != nil {
 		logger.Error.Printf("No se pudo crear el usuario en OnlyOne, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
