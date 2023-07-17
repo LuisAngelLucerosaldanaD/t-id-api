@@ -14,6 +14,7 @@ type PortsServerOnboarding interface {
 	DeleteOnboarding(id string) (int, error)
 	GetOnboardingByID(id string) (*Onboarding, int, error)
 	GetAllOnboarding() ([]*Onboarding, error)
+	GetOnboardingByUserID(UserId string) (*Onboarding, int, error)
 }
 
 type service struct {
@@ -87,4 +88,17 @@ func (s *service) GetOnboardingByID(id string) (*Onboarding, int, error) {
 
 func (s *service) GetAllOnboarding() ([]*Onboarding, error) {
 	return s.repository.getAll()
+}
+
+func (s *service) GetOnboardingByUserID(UserId string) (*Onboarding, int, error) {
+	if !govalidator.IsUUID(UserId) {
+		logger.Error.Println(s.txID, " - don't meet validations:", fmt.Errorf("user_id isn't uuid"))
+		return nil, 15, fmt.Errorf("user_id isn't uuid")
+	}
+	m, err := s.repository.getByUserID(UserId)
+	if err != nil {
+		logger.Error.Println(s.txID, " - couldn`t getByID row:", err)
+		return nil, 22, err
+	}
+	return m, 29, nil
 }

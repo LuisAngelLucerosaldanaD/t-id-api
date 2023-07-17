@@ -117,3 +117,17 @@ func (s *psql) getByClientIDAndRequestID(clientIid int64, requestID string) (*Va
 	}
 	return &mdl, nil
 }
+
+func (s *psql) updateStatus(m *ValidationRequest) error {
+	date := time.Now()
+	m.UpdatedAt = date
+	const psqlUpdate = `UPDATE cfg.validation_request SET status = :status, updated_at = :updated_at WHERE id = :id `
+	rs, err := s.DB.NamedExec(psqlUpdate, &m)
+	if err != nil {
+		return err
+	}
+	if i, _ := rs.RowsAffected(); i == 0 {
+		return fmt.Errorf("ecatch:108")
+	}
+	return nil
+}

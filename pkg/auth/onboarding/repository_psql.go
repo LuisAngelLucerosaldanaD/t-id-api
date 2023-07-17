@@ -97,3 +97,16 @@ func (s *psql) getAll() ([]*Onboarding, error) {
 	}
 	return ms, nil
 }
+
+func (s *psql) getByUserID(userId string) (*Onboarding, error) {
+	const psqlGetByID = `SELECT id , client_id, request_id, user_id, status, created_at, updated_at FROM auth.onboarding WHERE user_id = $1 order by created_at desc limit 1`
+	mdl := Onboarding{}
+	err := s.DB.Get(&mdl, psqlGetByID, userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return &mdl, err
+	}
+	return &mdl, nil
+}

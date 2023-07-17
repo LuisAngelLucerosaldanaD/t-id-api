@@ -46,15 +46,55 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
 	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
 	if err != nil {
-		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		logger.Error.Printf("couldn't bind model start onboarding: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.CreateUsers(uuid.New().String(), nil, req.DocumentNumber, nil, req.Email, req.FirstName, req.SecondName, req.SecondSurname, nil, nil, req.Nationality, nil, req.FirstSurname, nil, nil, nil, nil, c.IP(), req.Cellphone)
+	user, code, err := srvAuth.SrvUser.GetUsersByEmail(req.Email)
+	if err != nil {
+		logger.Error.Printf("couldn't bind get user by email: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user != nil {
+		onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
+		if err != nil {
+			logger.Error.Printf("couldn't bind get onboarding by user id: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if onboarding != nil && onboarding.Status == "finished" {
+			// TODO validar el número máximo de las consultas de validación y el tiempo de vida
+			ttl := time.Now().AddDate(0, 0, 3)
+			validation, code, err := srvCfg.SrvValidationRequest.CreateValidationRequest(req.ClientId, 3, req.RequestId, ttl, user.DocumentNumber, "pending")
+			if err != nil {
+				logger.Error.Printf("couldn't bind create validation request: %v", err)
+				res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+				return c.Status(http.StatusAccepted).JSON(res)
+			}
+
+			// TODO validar el cifrado de datos
+			res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?validation_id=%d&user_id=%s&email=%s&process=validation", validation.ID, user.ID, req.Email)
+			res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+			res.Error = false
+			return c.Status(http.StatusOK).JSON(res)
+		}
+		if onboarding != nil && onboarding.Status == "pending" {
+			res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enrolamiento", onboarding.ID, user.ID, req.Email)
+			res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+			res.Error = false
+			return c.Status(http.StatusOK).JSON(res)
+		}
+	}
+
+	user, code, err = srvAuth.SrvUser.CreateUsers(uuid.New().String(), nil, req.DocumentNumber, nil, req.Email, req.FirstName, req.SecondName, req.SecondSurname, nil, nil, req.Nationality, nil, req.FirstSurname, nil, nil, nil, nil, c.IP(), req.Cellphone)
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -89,7 +129,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("%s/%s/%s", onboarding.ID, user.ID, req.Email)
+	res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enrolamiento", onboarding.ID, user.ID, req.Email)
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
@@ -346,6 +386,85 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	err = emailSd.SendMail()
 	if err != nil {
 		logger.Error.Println(h.TxID, " - error al enviar el correo con las credenciales de la wallet: %s", err.Error())
+	}
+
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// ValidateIdentity godoc
+// @Summary Método que permite terminar el enrolamiento de un usuario
+// @Description Método que permite terminar el enrolamiento de un usuario que ha sido validado desde OnlyOne
+// @tags Onboarding
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param RequestProcessOnboarding body RequestProcessOnboarding true "Datos para validar el enrolamiento del usuario"
+// @Success 200 {object} ResProcessOnboarding
+// @Router /api/v1/onboarding/process [post]
+func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
+	res := ResProcessOnboarding{Error: true}
+	req := RequestValidationIdentity{}
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	selfieBytes, err := base64.StdEncoding.DecodeString(req.FaceImage)
+	if err != nil {
+		logger.Error.Printf("couldn't decode selfie: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileDocFront, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(2, req.UserID)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if fileDocFront == nil {
+		res.Code, res.Type, res.Msg = 22, 1, "El usuario no ha cargado su documento de identidad aun"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentB64, code, err := srvCfg.SrvFilesS3.GetFileByPath(fileDocFront.Path, fileDocFront.Name)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentFrontBytes, err := base64.StdEncoding.DecodeString(documentB64.Encoding)
+	if err != nil {
+		logger.Error.Printf("couldn't decode document front: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	resp, err := aws_ia.CompareFacesV2(selfieBytes, documentFrontBytes)
+	if err != nil {
+		logger.Error.Printf("couldn't decode identity: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if !resp {
+		res.Code, res.Type, res.Msg = 109, 1, "La persona no coincide con su documento de identidad"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvValidationRequest.UpdateStatusValidationRequest(req.ValidationId, "callback")
+	if err != nil {
+		logger.Error.Printf("couldn't bind update validation request: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)

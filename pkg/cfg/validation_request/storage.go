@@ -18,6 +18,7 @@ type ServicesValidationRequestRepository interface {
 	getByID(id int64) (*ValidationRequest, error)
 	getAll() ([]*ValidationRequest, error)
 	getByClientIDAndRequestID(clientIid int64, requestID string) (*ValidationRequest, error)
+	updateStatus(m *ValidationRequest) error
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesValidationRequestRepository {

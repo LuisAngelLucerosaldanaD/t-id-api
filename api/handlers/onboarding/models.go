@@ -36,3 +36,9 @@ type ResProcessOnboarding struct {
 	Type  int         `json:"type"`
 	Msg   string      `json:"msg"`
 }
+
+type RequestValidationIdentity struct {
+	FaceImage    string `json:"face_image"`
+	UserID       string `json:"user_id"`
+	ValidationId int64  `json:"validation_id"`
+}

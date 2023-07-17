@@ -15,6 +15,7 @@ type PortsServerValidationRequest interface {
 	GetValidationRequestByID(id int64) (*ValidationRequest, int, error)
 	GetAllValidationRequest() ([]*ValidationRequest, error)
 	GetValidationRequestByClientIDAndRequestID(clientID int64, requestID string) (*ValidationRequest, int, error)
+	UpdateStatusValidationRequest(id int64, status string) (*ValidationRequest, int, error)
 }
 
 type service struct {
@@ -101,4 +102,16 @@ func (s *service) GetValidationRequestByClientIDAndRequestID(clientID int64, req
 		return nil, 22, err
 	}
 	return m, 29, nil
+}
+
+func (s *service) UpdateStatusValidationRequest(id int64, status string) (*ValidationRequest, int, error) {
+	m := ValidationRequest{
+		ID:     id,
+		Status: status,
+	}
+	if err := s.repository.updateStatus(&m); err != nil {
+		logger.Error.Println(s.txID, " - couldn't update ValidationRequest :", err)
+		return &m, 18, err
+	}
+	return &m, 29, nil
 }
