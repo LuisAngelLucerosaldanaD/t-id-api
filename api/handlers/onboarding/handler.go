@@ -161,6 +161,23 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByID(req.Onboarding)
+	if err != nil {
+		logger.Error.Printf("couldn't get onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding.Status != "started" {
+		res.Code, res.Type, res.Msg = 22, 1, "El usuario ya ha finalizado el proceso de enrolamiento"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
 	selfieBytes, err := base64.StdEncoding.DecodeString(req.Selfie)
 	if err != nil {
 		logger.Error.Printf("couldn't decode selfie: %v", err)
@@ -256,18 +273,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	if err != nil {
 		logger.Error.Printf("couldn't create traceability, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByID(req.Onboarding)
-	if err != nil {
-		logger.Error.Printf("couldn't get onboarding, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if onboarding == nil {
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -394,15 +399,15 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 }
 
 // ValidateIdentity godoc
-// @Summary Método que permite terminar el enrolamiento de un usuario
-// @Description Método que permite terminar el enrolamiento de un usuario que ha sido validado desde OnlyOne
+// @Summary Método que permite finalizar la validación de identidad de un usuario
+// @Description Método que permite finalizar la validación de identidad de un usuario por la aplicación de OnlyOne
 // @tags Onboarding
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param RequestProcessOnboarding body RequestProcessOnboarding true "Datos para validar el enrolamiento del usuario"
+// @Param RequestValidationIdentity body RequestValidationIdentity true "Datos para validar la identidad del usuario"
 // @Success 200 {object} ResProcessOnboarding
-// @Router /api/v1/onboarding/process [post]
+// @Router /api/v1/onboarding/validate-identity [post]
 func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 	res := ResProcessOnboarding{Error: true}
 	req := RequestValidationIdentity{}
@@ -415,6 +420,25 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	onboarding, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByID(req.ValidationId)
+	if err != nil {
+		logger.Error.Printf("couldn't bind get validation request: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding == nil {
+		logger.Error.Printf("couldn't bind get validation request")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding.Status != "pending" {
+		logger.Error.Printf("La validación de identidad ya ha sido realizada o no existe")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
 	selfieBytes, err := base64.StdEncoding.DecodeString(req.FaceImage)
 	if err != nil {
 		logger.Error.Printf("couldn't decode selfie: %v", err)
@@ -422,33 +446,33 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fileDocFront, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(2, req.UserID)
+	fileSelfie, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(1, req.UserID)
 	if err != nil {
 		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if fileDocFront == nil {
+	if fileSelfie == nil {
 		res.Code, res.Type, res.Msg = 22, 1, "El usuario no ha cargado su documento de identidad aun"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	documentB64, code, err := srvCfg.SrvFilesS3.GetFileByPath(fileDocFront.Path, fileDocFront.Name)
+	documentB64, code, err := srvCfg.SrvFilesS3.GetFileByPath(fileSelfie.Path, fileSelfie.Name)
 	if err != nil {
 		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	documentFrontBytes, err := base64.StdEncoding.DecodeString(documentB64.Encoding)
+	selfieStorageBytes, err := base64.StdEncoding.DecodeString(documentB64.Encoding)
 	if err != nil {
 		logger.Error.Printf("couldn't decode document front: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	resp, err := aws_ia.CompareFacesV2(selfieBytes, documentFrontBytes)
+	resp, err := aws_ia.CompareFacesV2(selfieBytes, selfieStorageBytes)
 	if err != nil {
 		logger.Error.Printf("couldn't decode identity: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
