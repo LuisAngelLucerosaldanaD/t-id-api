@@ -72,8 +72,8 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 
 		if onboarding != nil && onboarding.Status == "finished" {
 			// TODO validar el número máximo de las consultas de validación y el tiempo de vida
-			ttl := time.Now().AddDate(0, 0, 3)
-			validation, code, err := srvCfg.SrvValidationRequest.CreateValidationRequest(req.ClientId, 3, req.RequestId, ttl, user.DocumentNumber, "pending")
+			ttl := time.Now().AddDate(0, 0, 1)
+			validation, code, err := srvCfg.SrvValidationRequest.CreateValidationRequest(req.ClientId, 1, req.RequestId, ttl, user.DocumentNumber, "pending")
 			if err != nil {
 				logger.Error.Printf("couldn't bind create validation request: %v", err)
 				res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -200,7 +200,24 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	}
 
 	if !resp {
-		res.Code, res.Type, res.Msg = 109, 1, "La persona no coincide con su documento de identidad"
+
+		// TODO pendiente por enviar a validación manual si esta rechazado por la IA
+		_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de identidad", "error", "La validación de identidad fue rechazada", req.UserID)
+		if err != nil {
+			logger.Error.Printf("couldn't create traceability, error: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.ID, "refused")
+		if err != nil {
+			logger.Error.Printf("couldn't update onboarding, error: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		res.Error = false
+		res.Code, res.Type, res.Msg = 109, 1, "Se ha procesado la información de enrolamiento"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -480,7 +497,15 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 	}
 
 	if !resp {
-		res.Code, res.Type, res.Msg = 109, 1, "La persona no coincide con su documento de identidad"
+		_, code, err = srvCfg.SrvValidationRequest.UpdateStatusValidationRequest(req.ValidationId, "refused")
+		if err != nil {
+			logger.Error.Printf("couldn't bind update validation request: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		res.Error = false
+		res.Code, res.Type, res.Msg = 109, 1, "Se ha procesado la solicitud"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
