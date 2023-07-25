@@ -72,6 +72,15 @@ definitions:
       user_id:
         type: string
     type: object
+  onboarding.RequestValidationIdentity:
+    properties:
+      face_image:
+        type: string
+      user_id:
+        type: string
+      validation_id:
+        type: integer
+    type: object
   onboarding.ResProcessOnboarding:
     properties:
       code:
@@ -558,6 +567,35 @@ paths:
           schema:
             $ref: '#/definitions/onboarding.ResProcessOnboarding'
       summary: Método que permite terminar el enrolamiento de un usuario
+      tags:
+      - Onboarding
+  /api/v1/onboarding/validate-identity:
+    post:
+      consumes:
+      - application/json
+      description: Método que permite finalizar la validación de identidad de un usuario
+        por la aplicación de OnlyOne
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Datos para validar la identidad del usuario
+        in: body
+        name: RequestValidationIdentity
+        required: true
+        schema:
+          $ref: '#/definitions/onboarding.RequestValidationIdentity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/onboarding.ResProcessOnboarding'
+      summary: Método que permite finalizar la validación de identidad de un usuario
       tags:
       - Onboarding
   /api/v1/traceability/user-session/{userID}:

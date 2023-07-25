@@ -183,6 +183,48 @@
                 }
             }
         },
+        "/api/v1/onboarding/validate-identity": {
+            "post": {
+                "description": "Método que permite finalizar la validación de identidad de un usuario por la aplicación de OnlyOne",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Método que permite finalizar la validación de identidad de un usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos para validar la identidad del usuario",
+                        "name": "RequestValidationIdentity",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/onboarding.RequestValidationIdentity"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/onboarding.ResProcessOnboarding"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/traceability/user-session/{userID}": {
             "get": {
                 "description": "Método para obtener la trazabilidad registrada para el proceso de verificación de identidad",
@@ -922,6 +964,20 @@
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "onboarding.RequestValidationIdentity": {
+            "type": "object",
+            "properties": {
+                "face_image": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "validation_id": {
+                    "type": "integer"
                 }
             }
         },

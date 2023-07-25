@@ -1,11 +1,16 @@
 package onboarding
 
 type resCreateOnboarding struct {
-	Error bool   `json:"error"`
-	Data  string `json:"data"`
-	Code  int    `json:"code"`
-	Type  int    `json:"type"`
-	Msg   string `json:"msg"`
+	Error bool        `json:"error"`
+	Data  *Onboarding `json:"data"`
+	Code  int         `json:"code"`
+	Type  int         `json:"type"`
+	Msg   string      `json:"msg"`
+}
+
+type Onboarding struct {
+	Url    string `json:"url"`
+	Method string `json:"method"`
 }
 
 type requestCreateOnboarding struct {

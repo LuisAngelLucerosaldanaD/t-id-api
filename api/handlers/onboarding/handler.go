@@ -81,13 +81,19 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 			}
 
 			// TODO validar el cifrado de datos
-			res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?validation_id=%d&user_id=%s&email=%s&process=validation", validation.ID, user.ID, req.Email)
+			res.Data = &Onboarding{
+				Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?validation_id=%d&user_id=%s&email=%s&process=validation", validation.ID, user.ID, req.Email),
+				Method: "validation",
+			}
 			res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 			res.Error = false
 			return c.Status(http.StatusOK).JSON(res)
 		}
 		if onboarding != nil && onboarding.Status == "pending" {
-			res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enrolamiento", onboarding.ID, user.ID, req.Email)
+			res.Data = &Onboarding{
+				Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enroll", onboarding.ID, user.ID, req.Email),
+				Method: "onboarding",
+			}
 			res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 			res.Error = false
 			return c.Status(http.StatusOK).JSON(res)
@@ -129,7 +135,10 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enrolamiento", onboarding.ID, user.ID, req.Email)
+	res.Data = &Onboarding{
+		Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enroll", onboarding.ID, user.ID, req.Email),
+		Method: "onboarding",
+	}
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
