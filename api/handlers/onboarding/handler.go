@@ -191,10 +191,10 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if onboarding.Status != "started" {
+	/*if onboarding.Status != "started" {
 		res.Code, res.Type, res.Msg = 22, 1, "El usuario ya ha finalizado el proceso de enrolamiento"
 		return c.Status(http.StatusAccepted).JSON(res)
-	}
+	}*/
 
 	selfieBytes, err := base64.StdEncoding.DecodeString(req.Selfie)
 	if err != nil {
