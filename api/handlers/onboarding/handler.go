@@ -70,7 +70,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
 
-		if onboarding != nil && onboarding.Status == "finished" {
+		if onboarding != nil && (onboarding.Status == "finished" || onboarding.Status == "pending") {
 			// TODO validar el número máximo de las consultas de validación y el tiempo de vida
 			ttl := time.Now().AddDate(0, 0, 1)
 			validation, code, err := srvCfg.SrvValidationRequest.CreateValidationRequest(req.ClientId, 1, req.RequestId, ttl, user.DocumentNumber, "pending")
@@ -89,7 +89,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 			res.Error = false
 			return c.Status(http.StatusOK).JSON(res)
 		}
-		if onboarding != nil && onboarding.Status == "pending" {
+		if onboarding != nil && onboarding.Status == "started" {
 			res.Data = &Onboarding{
 				Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enroll", onboarding.ID, user.ID, req.Email),
 				Method: "onboarding",
@@ -97,6 +97,15 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 			res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 			res.Error = false
 			return c.Status(http.StatusOK).JSON(res)
+		}
+
+		if onboarding == nil {
+			_, err = srvAuth.SrvUser.DeleteUsers(user.ID)
+			if err != nil {
+				logger.Error.Printf("No se pudo eliminar el usuario, error: %v", err)
+				res.Code, res.Type, res.Msg = 108, 1, "No se pudo eliminar el usuario, error: "+err.Error()
+				return c.Status(http.StatusOK).JSON(res)
+			}
 		}
 	}
 
@@ -204,7 +213,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	resp, err := aws_ia.CompareFacesV2(selfieBytes, documentFrontBytes)
 	if err != nil {
 		logger.Error.Printf("couldn't decode identity: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
