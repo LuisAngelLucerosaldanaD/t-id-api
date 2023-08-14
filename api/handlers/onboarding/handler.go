@@ -82,7 +82,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 
 			// TODO validar el cifrado de datos
 			res.Data = &Onboarding{
-				Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?validation_id=%d&user_id=%s&email=%s&process=validation", validation.ID, user.ID, req.Email),
+				Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?process=validation&validation_id=%d&user_id=%s&email=%s", validation.ID, user.ID, req.Email),
 				Method: "validation",
 			}
 			res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
@@ -91,7 +91,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		}
 		if onboarding != nil && onboarding.Status == "started" {
 			res.Data = &Onboarding{
-				Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enroll", onboarding.ID, user.ID, req.Email),
+				Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?process=enroll&onboarding_id=%s&user_id=%s&email=%s", onboarding.ID, user.ID, req.Email),
 				Method: "onboarding",
 			}
 			res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
@@ -191,10 +191,10 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	/*if onboarding.Status != "started" {
+	if onboarding.Status != "started" {
 		res.Code, res.Type, res.Msg = 22, 1, "El usuario ya ha finalizado el proceso de enrolamiento"
 		return c.Status(http.StatusAccepted).JSON(res)
-	}*/
+	}
 
 	selfieBytes, err := base64.StdEncoding.DecodeString(req.Selfie)
 	if err != nil {
