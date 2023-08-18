@@ -756,7 +756,197 @@ func (h *handlerUser) validationFace(c *fiber.Ctx) error {
 			status = identityReq.Status
 		}
 
-		_, code, err = srvCfg.SrvValidationRequest.UpdateValidationRequest(identityReq.ID, identityReq.ClientId, numMaxRequest, identityReq.RequestId, identityReq.ExpiredAt, identityReq.UserIdentification, status)
+		_, code, err = srvCfg.SrvValidationRequest.UpdateValidationRequest(identityReq.ID, identityReq.ClientId, numMaxRequest, identityReq.RequestId, identityReq.ExpiredAt, identityReq.UserID, status)
+		if err != nil {
+			logger.Error.Printf("No se pudo actualizar el numero maximo de solicitud de validación, error: %v", err)
+			res.Data = ""
+			res.Code, res.Type, res.Msg = 23, 1, "No se pudo actualizar el número máximo de solicitud de validación"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if client.UrlApi != "" && numMaxRequest == 0 {
+			reqBytes, _ := json.Marshal(&reqWs)
+			_, code, err := ws.ConsumeWS(reqBytes, client.UrlApi, "POST", "", nil)
+			if err != nil {
+				logger.Error.Printf("No se pudo enviar la petición para registra la validación de identidad: %v", err)
+				res.Data = ""
+				res.Code, res.Type, res.Msg = 403, 1, "No se pudo enviar la petición para registra la validación de identidad"
+				return c.Status(http.StatusAccepted).JSON(res)
+			}
+
+			if code != 200 {
+				logger.Error.Printf("El servicio para registrar la validación de identidad respondió con un código diferente al 200, código: %d", code)
+				res.Data = ""
+				res.Code, res.Type, res.Msg = code, 1, fmt.Sprintf("El servicio para registrar la validación de identidad respondió con un código diferente al 200, código: %d", code)
+				return c.Status(http.StatusAccepted).JSON(res)
+			}
+		}
+	}
+
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// validationFace godoc
+// @Summary Verifica la identidad de un usuario
+// @Description Método para verificar la identidad de una persona
+// @tags User
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param ReqValidationFace body ReqValidationFace true "Datos para la verificación de identidad"
+// @Success 200 {object} responseAnny
+// @Router /api/v1/user/validation [post]
+func (h *handlerUser) validateFinishOnboarding(c *fiber.Ctx) error {
+	res := responseAnny{Error: true}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	req := ReqValidationFace{}
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("no se pudo parsear el cuerpo de la solicitud, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	var client *clients.Client
+	var identityReq *validation_request.ValidationRequest
+
+	if req.Nit != "" {
+		client, code, err := srvCfg.SrvClients.GetClientsByNit(strings.ReplaceAll(req.Nit, "/", ""))
+		if err != nil {
+			logger.Error.Printf("No se pudo obtener el cliente: %v", err)
+			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener el cliente"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if client == nil {
+			res.Code, res.Type, res.Msg = 22, 1, "No se encontró un cliente con los datos proporcionados"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		identityReq, code, err = srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, req.RequestID)
+		if err != nil {
+			logger.Error.Printf("No se pudo obtener los datos de la validacion de identidad: %v", err)
+			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener los datos de la validacion de identidad"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+		if identityReq == nil {
+			logger.Error.Printf("No se pudo obtener los datos de la validacion de identidad: %v")
+			res.Code, res.Type, res.Msg = code, 1, "No se pudo obtener los datos de la validacion de identidad"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if identityReq.Status != "pending" {
+			res.Code, res.Type, res.Msg = 202, 1, "La validación de identidad para este flujo ya ha sido realizada"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		dateExpired := identityReq.ExpiredAt.Sub(time.Now())
+		if dateExpired.Minutes() <= 0 {
+			res.Code, res.Type, res.Msg = 403, 1, "La fecha para validar la identidad ha caducado"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if identityReq.MaxNumValidation == 0 {
+			res.Code, res.Type, res.Msg = 403, 1, "Se ha superado el número máximo de validaciones configurado para este flujo de validación de identidad"
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+	}
+
+	user, code, err := srvAuth.SrvUser.GetUsersByIdentityNumber(req.DocumentNumber)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener el usuario a validar, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		res.Code, res.Type, res.Msg = 22, 1, "No hay un usuario registrado con la información proporcionada"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	userValidation, code, err := srvAuth.SrvValidationUsers.GetValidationUsersByUserID(user.ID)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener el id de la validación de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if userValidation == nil {
+		res.Code, res.Type, res.Msg = 403, 1, "El usuario aun no ha validado su identidad en el portal"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileDocFront, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(2, user.ID)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if fileDocFront == nil {
+		res.Code, res.Type, res.Msg = 22, 1, "El usuario no ha cargado su documento de identidad aun"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentB64, code, err := srvCfg.SrvFilesS3.GetFileByPath(fileDocFront.Path, fileDocFront.Name)
+	if err != nil {
+		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	selfieBytes, err := base64.StdEncoding.DecodeString(req.FaceImage)
+	if err != nil {
+		logger.Error.Printf("couldn't decode selfie: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	documentFrontBytes, err := base64.StdEncoding.DecodeString(documentB64.Encoding)
+	if err != nil {
+		logger.Error.Printf("couldn't decode document front: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	resp, err := aws_ia.CompareFacesV2(selfieBytes, documentFrontBytes)
+	if err != nil {
+		logger.Error.Printf("no se pudo comparar los rostros de la persona y el documento de identidad: %v", err)
+		res.Code, res.Type, res.Msg = 22, 1, "no se pudo comparar los rostros de la persona y el documento de identidad"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	reqWs := ReqWsValidation{
+		UserId:         "",
+		DocumentNumber: user.DocumentNumber,
+		ValidatedAt:    time.Now().UTC().String(),
+		ValidatorId:    "",
+		RequestId:      req.RequestID,
+	}
+
+	status := ""
+
+	if !resp {
+		res.Code, res.Type, res.Msg = 22, 1, "La persona no es la misma que la del documento de identidad"
+		reqWs.TransactionId = "-"
+		status = "refused"
+	} else {
+		res.Data = "Validación de identidad realizada correctamente, la persona es la misma que la del documento de identificación"
+		res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+		res.Error = false
+		reqWs.TransactionId = userValidation.TransactionId
+		status = "accept"
+	}
+
+	if client != nil && identityReq != nil {
+
+		numMaxRequest := identityReq.MaxNumValidation - 1
+		if numMaxRequest > 0 {
+			status = identityReq.Status
+		}
+
+		_, code, err = srvCfg.SrvValidationRequest.UpdateValidationRequest(identityReq.ID, identityReq.ClientId, numMaxRequest, identityReq.RequestId, identityReq.ExpiredAt, identityReq.UserID, status)
 		if err != nil {
 			logger.Error.Printf("No se pudo actualizar el numero maximo de solicitud de validación, error: %v", err)
 			res.Data = ""

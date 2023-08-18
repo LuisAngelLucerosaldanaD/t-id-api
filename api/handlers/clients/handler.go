@@ -227,7 +227,7 @@ func (h *handlerWork) GetValidationRequest(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if validationRequest.UserIdentification != documentNumber {
+	if validationRequest.UserID != documentNumber {
 		res.Code, res.Type, res.Msg = 22, 1, "Este usuario no tiene configurado una solicitud de validación de identidad en el flujo"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}

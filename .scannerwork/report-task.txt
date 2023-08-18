@@ -1,7 +1,0 @@
-organization=check-id
-projectKey=check-id_check-id-api
-serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.38669
-dashboardUrl=https://sonarcloud.io/dashboard?id=check-id_check-id-api
-ceTaskId=AYa8S2fbnNZJQCdHLg15
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AYa8S2fbnNZJQCdHLg15

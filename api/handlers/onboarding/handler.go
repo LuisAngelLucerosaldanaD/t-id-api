@@ -73,7 +73,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		if onboarding != nil && (onboarding.Status == "finished" || onboarding.Status == "pending") {
 			// TODO validar el número máximo de las consultas de validación y el tiempo de vida
 			ttl := time.Now().AddDate(0, 0, 1)
-			validation, code, err := srvCfg.SrvValidationRequest.CreateValidationRequest(req.ClientId, 1, req.RequestId, ttl, user.DocumentNumber, "pending")
+			validation, code, err := srvCfg.SrvValidationRequest.CreateValidationRequest(req.ClientId, 1, req.RequestId, ttl, user.ID, "pending")
 			if err != nil {
 				logger.Error.Printf("couldn't bind create validation request: %v", err)
 				res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)

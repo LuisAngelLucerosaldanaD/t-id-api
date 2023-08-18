@@ -14,7 +14,7 @@ import (
 // @contact.email luis.lucero@bjungle.net
 // @license.name Software Owner
 // @license.url https://www.bjungle.net/terms/licenses
-// @host http://172.147.77.149:50050
+// @host 172.147.77.149:50050
 // @tag.name User
 // @tag.description Métodos referentes al usuario
 // @tag.name Traceability

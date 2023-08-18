@@ -272,6 +272,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/traceability/validation-identity/{id}": {
+            "get": {
+                "description": "Método que obtiene el historial de validaciones de identidad de un usuario por su id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Traceability"
+                ],
+                "summary": "Obtiene el historial de validaciones de identidad de un usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/traceability.ResTrackingValidation"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/basic-information": {
             "post": {
                 "description": "Método para el registro de los datos básicos de una persona",
@@ -864,6 +904,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "check-id-api_api_handlers_onboarding.Onboarding": {
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "clients.Client": {
             "type": "object",
             "properties": {
@@ -1013,7 +1064,30 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "data": {
+                    "$ref": "#/definitions/check-id-api_api_handlers_onboarding.Onboarding"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
                     "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "traceability.ResTrackingValidation": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/traceability.Tracking"
+                    }
                 },
                 "error": {
                     "type": "boolean"
@@ -1042,6 +1116,38 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "traceability.Tracking": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expired_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "max_num_validation": {
+                    "type": "integer"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -1569,13 +1675,15 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.4",
-	Host:             "http://172.147.77.149:50050",
+	Host:             "172.147.77.149:50050",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Check ID OnBoarding",
 	Description:      "Api para OnBoarding y validación de identidad",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

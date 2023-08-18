@@ -1,5 +1,12 @@
 basePath: /
 definitions:
+  check-id-api_api_handlers_onboarding.Onboarding:
+    properties:
+      method:
+        type: string
+      url:
+        type: string
+    type: object
   clients.Client:
     properties:
       banner:
@@ -98,7 +105,22 @@ definitions:
       code:
         type: integer
       data:
+        $ref: '#/definitions/check-id-api_api_handlers_onboarding.Onboarding'
+      error:
+        type: boolean
+      msg:
         type: string
+      type:
+        type: integer
+    type: object
+  traceability.ResTrackingValidation:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/traceability.Tracking'
+        type: array
       error:
         type: boolean
       msg:
@@ -117,6 +139,27 @@ definitions:
       id:
         type: integer
       type:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  traceability.Tracking:
+    properties:
+      client_id:
+        type: integer
+      created_at:
+        type: string
+      expired_at:
+        type: string
+      id:
+        type: integer
+      max_num_validation:
+        type: integer
+      request_id:
+        type: string
+      status:
         type: string
       updated_at:
         type: string
@@ -443,7 +486,7 @@ definitions:
       type:
         type: integer
     type: object
-host: http://172.147.77.149:50050
+host: 172.147.77.149:50050
 info:
   contact:
     email: luis.lucero@bjungle.net
@@ -624,6 +667,34 @@ paths:
           schema:
             $ref: '#/definitions/traceability.resTraceability'
       summary: Obtención de los datos de trazabilidad
+      tags:
+      - Traceability
+  /api/v1/traceability/validation-identity/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Método que obtiene el historial de validaciones de identidad de
+        un usuario por su id
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/traceability.ResTrackingValidation'
+      summary: Obtiene el historial de validaciones de identidad de un usuario
       tags:
       - Traceability
   /api/v1/user/basic-information:
