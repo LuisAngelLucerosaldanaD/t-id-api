@@ -16,7 +16,8 @@ type PortsServerValidationRequest interface {
 	GetAllValidationRequest() ([]*ValidationRequest, error)
 	GetValidationRequestByClientIDAndRequestID(clientID int64, requestID string) (*ValidationRequest, int, error)
 	UpdateStatusValidationRequest(id int64, status string) (*ValidationRequest, int, error)
-	GetValidationRequestByUserID(userID string) ([]*ValidationRequest, error)
+	GetAllValidationRequestByUserID(userID string) ([]*ValidationRequest, error)
+	GetValidationRequestByUserID(userID string) (*ValidationRequest, int, error)
 }
 
 type service struct {
@@ -117,6 +118,15 @@ func (s *service) UpdateStatusValidationRequest(id int64, status string) (*Valid
 	return &m, 29, nil
 }
 
-func (s *service) GetValidationRequestByUserID(userID string) ([]*ValidationRequest, error) {
-	return s.repository.getByUserId(userID)
+func (s *service) GetAllValidationRequestByUserID(userID string) ([]*ValidationRequest, error) {
+	return s.repository.getAllByUserId(userID)
+}
+
+func (s *service) GetValidationRequestByUserID(userID string) (*ValidationRequest, int, error) {
+	m, err := s.repository.getByUserID(userID)
+	if err != nil {
+		logger.Error.Println(s.txID, " - couldn`t getByUserID row:", err)
+		return nil, 22, err
+	}
+	return m, 29, nil
 }

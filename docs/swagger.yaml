@@ -190,17 +190,6 @@ definitions:
       selfie:
         type: integer
     type: object
-  users.ReqValidationFace:
-    properties:
-      document_number:
-        type: integer
-      face_image:
-        type: string
-      nit:
-        type: string
-      request-id:
-        type: string
-    type: object
   users.UserStatus:
     properties:
       email:
@@ -426,6 +415,19 @@ definitions:
       code:
         type: integer
       data: {}
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  users.responseFinishOnboarding:
+    properties:
+      code:
+        type: integer
+      data:
+        type: boolean
       error:
         type: boolean
       msg:
@@ -777,6 +779,62 @@ paths:
       summary: Obtiene la cantidad de usuarios que no cargaron información requerida
       tags:
       - User
+  /api/v1/user/finish-onboarding:
+    get:
+      consumes:
+      - application/json
+      description: Método que permite validar si se ha finalizado el proceso de enrolamiento
+        de un usuario
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Id del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseFinishOnboarding'
+      summary: Permite validar si ha terminado el enrolamiento de un usuario
+      tags:
+      - User
+  /api/v1/user/finish-validation:
+    get:
+      consumes:
+      - application/json
+      description: Método que permite validar si ha terminado la validación de identidad
+        de un usuario
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Id del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.responseFinishOnboarding'
+      summary: Permite validar si ha terminado la validación de identidad de un usuario
+      tags:
+      - User
   /api/v1/user/upload-documents:
     post:
       consumes:
@@ -923,34 +981,6 @@ paths:
           schema:
             $ref: '#/definitions/users.responseAnny'
       summary: Verifica si el usuario ha validado su identidad
-      tags:
-      - User
-  /api/v1/user/validation:
-    post:
-      consumes:
-      - application/json
-      description: Método para verificar la identidad de una persona
-      parameters:
-      - default: Bearer <Add access token here>
-        description: Authorization
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: Datos para la verificación de identidad
-        in: body
-        name: ReqValidationFace
-        required: true
-        schema:
-          $ref: '#/definitions/users.ReqValidationFace'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/users.responseAnny'
-      summary: Verifica la identidad de un usuario
       tags:
       - User
   /api/v1/validation-workflow:

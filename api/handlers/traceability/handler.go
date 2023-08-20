@@ -70,7 +70,7 @@ func (h *handlerTraceability) getTrackingValidation(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	traceability, err := srvCfg.SrvValidationRequest.GetValidationRequestByUserID(userID)
+	traceability, err := srvCfg.SrvValidationRequest.GetAllValidationRequestByUserID(userID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener la trazabilidad del usuario, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)

@@ -134,3 +134,11 @@ type ReqWsValidation struct {
 	ValidatorId    string `json:"validator_id"`
 	RequestId      string `json:"request_id"`
 }
+
+type responseFinishOnboarding struct {
+	Error bool   `json:"error"`
+	Data  bool   `json:"data"`
+	Code  int    `json:"code"`
+	Type  int    `json:"type"`
+	Msg   string `json:"msg"`
+}

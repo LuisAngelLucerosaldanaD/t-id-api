@@ -429,6 +429,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/user/finish-onboarding": {
+            "get": {
+                "description": "Método que permite validar si se ha finalizado el proceso de enrolamiento de un usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Permite validar si ha terminado el enrolamiento de un usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Id del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseFinishOnboarding"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/finish-validation": {
+            "get": {
+                "description": "Método que permite validar si ha terminado la validación de identidad de un usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Permite validar si ha terminado la validación de identidad de un usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Id del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseFinishOnboarding"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/upload-documents": {
             "post": {
                 "description": "Método para cargar el documento de identidad",
@@ -635,48 +715,6 @@ const docTemplate = `{
                         "name": "identity_number",
                         "in": "path",
                         "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/users.responseAnny"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/user/validation": {
-            "post": {
-                "description": "Método para verificar la identidad de una persona",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Verifica la identidad de un usuario",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Datos para la verificación de identidad",
-                        "name": "ReqValidationFace",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/users.ReqValidationFace"
-                        }
                     }
                 ],
                 "responses": {
@@ -1195,23 +1233,6 @@ const docTemplate = `{
                 }
             }
         },
-        "users.ReqValidationFace": {
-            "type": "object",
-            "properties": {
-                "document_number": {
-                    "type": "integer"
-                },
-                "face_image": {
-                    "type": "string"
-                },
-                "nit": {
-                    "type": "string"
-                },
-                "request-id": {
-                    "type": "string"
-                }
-            }
-        },
         "users.UserStatus": {
             "type": "object",
             "properties": {
@@ -1554,6 +1575,26 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "data": {},
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.responseFinishOnboarding": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "boolean"
+                },
                 "error": {
                     "type": "boolean"
                 },
