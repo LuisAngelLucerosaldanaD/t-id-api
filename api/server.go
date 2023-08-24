@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	version     = "0.1.3"
+	version     = "0.1.4"
 	website     = "https://www.bjungle.net"
 	banner      = `CheckId`
 	description = `CheckId - %s - Port: %s

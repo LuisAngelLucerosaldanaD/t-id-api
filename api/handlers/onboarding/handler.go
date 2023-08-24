@@ -311,7 +311,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.ID, "pending")
+	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "pending")
 	if err != nil {
 		logger.Error.Printf("couldn't create onboarding, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
