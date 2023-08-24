@@ -593,7 +593,6 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 // @tags User
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param id path string true "Id del usuario"
 // @Success 200 {object} responseFinishOnboarding
 // @Router /api/v1/user/finish-onboarding [get]
@@ -633,7 +632,6 @@ func (h *handlerUser) getFinishOnboarding(c *fiber.Ctx) error {
 // @tags User
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param id path string true "Id del usuario"
 // @Success 200 {object} responseFinishOnboarding
 // @Router /api/v1/user/finish-validation [get]

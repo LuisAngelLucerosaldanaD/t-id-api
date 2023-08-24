@@ -288,14 +288,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "ID del usuario",
                         "name": "id",
                         "in": "path",
@@ -445,14 +437,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Id del usuario",
                         "name": "id",
                         "in": "path",
@@ -483,14 +467,6 @@ const docTemplate = `{
                 ],
                 "summary": "Permite validar si ha terminado la validación de identidad de un usuario",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Id del usuario",
@@ -1625,26 +1601,97 @@ const docTemplate = `{
                 }
             }
         },
-        "work.Status": {
+        "work.User": {
             "type": "object",
             "properties": {
-                "expired": {
+                "age": {
                     "type": "integer"
                 },
-                "not_stated": {
+                "birth_date": {
+                    "type": "string"
+                },
+                "cellphone": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "civil_status": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "department": {
+                    "type": "string"
+                },
+                "document_number": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expedition_date": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "first_surname": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string"
+                },
+                "real_ip": {
+                    "type": "string"
+                },
+                "second_name": {
+                    "type": "string"
+                },
+                "second_surname": {
+                    "type": "string"
+                },
+                "type_document": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "work.Work": {
+            "type": "object",
+            "properties": {
+                "client_id": {
                     "type": "integer"
                 },
-                "pending": {
-                    "type": "integer"
+                "create_at": {
+                    "type": "string"
                 },
-                "refused": {
-                    "type": "integer"
+                "expired_at": {
+                    "type": "string"
                 },
-                "total": {
-                    "type": "integer"
+                "process": {
+                    "type": "string"
                 },
-                "valid": {
-                    "type": "integer"
+                "request_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/work.User"
                 }
             }
         },
@@ -1655,7 +1702,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/work.Status"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/work.Work"
+                    }
                 },
                 "error": {
                     "type": "boolean"

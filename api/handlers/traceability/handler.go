@@ -55,7 +55,6 @@ func (h *handlerTraceability) getTraceabilitySession(c *fiber.Ctx) error {
 // @tags Traceability
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param id path string true "ID del usuario"
 // @Success 200 {object} ResTrackingValidation
 // @Router /api/v1/traceability/validation-identity/{id} [get]
