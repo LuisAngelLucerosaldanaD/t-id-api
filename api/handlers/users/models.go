@@ -62,26 +62,26 @@ type resGetUserSession struct {
 
 type UserValidation struct {
 	ID               string     `json:"id"`
-	TypeDocument     string     `json:"type_document"`
+	TypeDocument     *string    `json:"type_document"`
 	DocumentNumber   string     `json:"document_number"`
 	ExpeditionDate   *time.Time `json:"expedition_date"`
 	Email            string     `json:"email"`
 	FirstName        string     `json:"first_name"`
 	SecondName       string     `json:"second_name"`
 	SecondSurname    string     `json:"second_surname"`
-	Age              int32      `json:"age"`
+	Age              *int32     `json:"age"`
 	SelfieImg        string     `json:"selfie_img"`
 	BackDocumentImg  string     `json:"back_document_img"`
 	FrontDocumentImg string     `json:"front_document_img"`
-	Gender           string     `json:"gender"`
-	Nationality      string     `json:"nationality"`
-	CivilStatus      string     `json:"civil_status"`
-	FirstSurname     string     `json:"first_surname"`
+	Gender           *string    `json:"gender"`
+	Nationality      *string    `json:"nationality"`
+	CivilStatus      *string    `json:"civil_status"`
+	FirstSurname     *string    `json:"first_surname"`
 	BirthDate        *time.Time `json:"birth_date"`
-	Country          string     `json:"country"`
+	Country          *string    `json:"country"`
 	TransactionId    string     `json:"transaction_id"`
-	Department       string     `json:"department"`
-	City             string     `json:"city"`
+	Department       *string    `json:"department"`
+	City             *string    `json:"city"`
 	CreatedAt        time.Time  `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 }

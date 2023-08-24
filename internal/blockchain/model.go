@@ -20,14 +20,13 @@ type dataAuth struct {
 }
 
 type Transaction struct {
-	From   string  `json:"from"`
-	To     string  `json:"to"`
-	Amount float64 `json:"amount"`
-	TypeId int     `json:"type_id"`
-	Data   string  `json:"data"`
-	Files  []*File `json:"files"`
+	From   string  `json:"from,omitempty"`
+	To     string  `json:"to,omitempty"`
+	Amount float64 `json:"amount,omitempty"`
+	TypeId int     `json:"type_id,omitempty"`
+	Data   string  `json:"data,omitempty"`
+	Files  []*File `json:"files,omitempty"`
 }
-
 type DataCreateTransaction struct {
 	Category    string       `json:"category"`
 	Name        string       `json:"name"`

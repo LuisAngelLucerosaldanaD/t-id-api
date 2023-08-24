@@ -8,11 +8,11 @@ type User struct {
 }
 
 type CompareFaceResponse struct {
-	Code  int         `json:"code"`
-	Data  CompareFace `json:"data"`
-	Error bool        `json:"error"`
-	Msg   string      `json:"msg"`
-	Type  string      `json:"type"`
+	Code  int    `json:"code"`
+	Data  bool   `json:"data"`
+	Error bool   `json:"error"`
+	Msg   string `json:"msg"`
+	Type  string `json:"type"`
 }
 
 type CompareFace struct {
@@ -26,7 +26,7 @@ type CompareFace struct {
 	SimilarityMetric string  `json:"similarity_metric"`
 	Threshold        float64 `json:"threshold"`
 	Time             float64 `json:"time"`
-	Verified         string  `json:"verified"`
+	Verified         bool    `json:"verified"`
 }
 
 type FacialArea struct {

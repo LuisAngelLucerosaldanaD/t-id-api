@@ -139,11 +139,6 @@ func CreateTransactionV2(user *users.Users, nameTransaction, descriptionTransact
 					Value: strings.TrimSpace(*user.SecondSurname),
 				},
 				{
-					Id:    5,
-					Name:  "Tipo de Documento",
-					Value: *user.TypeDocument,
-				},
-				{
 					Id:    6,
 					Name:  "Número de Documento",
 					Value: user.DocumentNumber,
@@ -185,8 +180,8 @@ func CreateTransactionV2(user *users.Users, nameTransaction, descriptionTransact
 				},
 				{
 					Id:    14,
-					Name:  "Fecha de Creación",
-					Value: user.CreatedAt.UTC().String(),
+					Name:  "Fecha de Actualización",
+					Value: time.Now().UTC().String(),
 				},
 			},
 		},
@@ -225,7 +220,7 @@ func CreateTransactionV2(user *users.Users, nameTransaction, descriptionTransact
 		return "", err
 	}
 
-	hash := ciphers.StringToHashSha256(string(dataBytes))
+	hash := ciphers.StringToHashSha256(string(bodyRq))
 	signValue, err := ciphers.SignWithEcdsa([]byte(hash), *privateKey)
 	if err != nil {
 		return "", err

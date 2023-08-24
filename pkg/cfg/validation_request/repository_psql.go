@@ -151,7 +151,7 @@ func (s *psql) getAllByUserId(userID string) ([]*ValidationRequest, error) {
 func (s *psql) getByUserID(userId string) (*ValidationRequest, error) {
 	const psqlGetByID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_id, status, created_at, updated_at FROM cfg.validation_request WHERE id = $1 order by id desc limit 1`
 	mdl := ValidationRequest{}
-	err := s.DB.Get(&mdl, psqlGetByID, id)
+	err := s.DB.Get(&mdl, psqlGetByID, userId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

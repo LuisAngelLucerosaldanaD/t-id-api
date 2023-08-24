@@ -326,15 +326,23 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	birthDate, _ := time.Parse("02/01/2006", basicData.BirthDate)
-	expeditionDate, _ := time.Parse("02/01/2006", basicData.ExpeditionDate)
+	birthDate, _ := time.Parse("02-01-2006", basicData.BirthDate)
+	expeditionDate, _ := time.Parse("02-01-2006", basicData.ExpeditionDate)
 	age := int32(time.Now().Year() - birthDate.Year())
 
+	nationality := "Colombia"
 	user, code, err = srvAuth.SrvUser.UpdateUsers(user.ID, nil, user.DocumentNumber, &expeditionDate,
 		user.Email, &basicData.FirstName, &basicData.SecondName, &basicData.SecondSurname, &age, &basicData.Gender,
-		user.Nationality, nil, &basicData.Surname, &birthDate, nil, nil, nil, user.RealIp, user.Cellphone)
+		&nationality, nil, &basicData.Surname, &birthDate, &nationality, nil, nil, user.RealIp, user.Cellphone)
 	if err != nil {
 		logger.Error.Printf("couldn't update basic data of user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Actualización de datos", "info", "Actualización de los datos personales", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}

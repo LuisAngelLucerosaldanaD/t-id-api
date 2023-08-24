@@ -71,6 +71,8 @@ func CompareFacesV2(face1, face2 []byte) (bool, error) {
 
 	resFace := CompareFaceResponse{}
 
+	logger.Trace.Println(string(rsBody))
+
 	err = json.Unmarshal(rsBody, &resFace)
 	if err != nil {
 		logger.Error.Printf("no se pudo parsear la respuesta del servio de comparacion de rostros: %v  -- log: ", err)
@@ -82,7 +84,7 @@ func CompareFacesV2(face1, face2 []byte) (bool, error) {
 		return false, fmt.Errorf(resFace.Msg)
 	}
 
-	return resFace.Data.Verified == "true", nil
+	return resFace.Data, nil
 }
 
 func GetExtensionFromBytes(file []byte) string {

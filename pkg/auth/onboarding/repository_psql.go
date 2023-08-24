@@ -110,3 +110,18 @@ func (s *psql) getByUserID(userId string) (*Onboarding, error) {
 	}
 	return &mdl, nil
 }
+
+// GetAll consulta todos los registros de la BD
+func (s *psql) getAllByStatus(status string) ([]*Onboarding, error) {
+	var ms []*Onboarding
+	const psqlGetAll = ` SELECT id , client_id, request_id, user_id, status, created_at, updated_at FROM auth.onboarding where status = $1 order by id asc;`
+
+	err := s.DB.Select(&ms, psqlGetAll, status)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return ms, err
+	}
+	return ms, nil
+}

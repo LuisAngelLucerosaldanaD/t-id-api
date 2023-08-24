@@ -37,34 +37,20 @@ type handlerWork struct {
 // @Router /api/v1/work/all [get]
 func (h *handlerWork) getTotalWork(c *fiber.Ctx) error {
 	res := resAllWork{Error: true}
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
-	wfOK, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("validado")
+	allOnboaring, err := srvAuth.SrvOnboarding.GetAllOnboarding()
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el total del trabajo validado, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	wfPending, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("pendiente")
+	allValidation, err := srvCfg.SrvValidationRequest.GetAllValidationRequest()
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el total del trabajo pendiente, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	wfRefused, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("rechazado")
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el total del trabajo rechazado, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	wfExpired, code, err := srvWf.SrvStatusReq.GetStatusRequestByStatus("expirado")
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el total del trabajo expirado, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -75,14 +61,133 @@ func (h *handlerWork) getTotalWork(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = Status{
-		Valid:     len(wfOK),
-		Pending:   len(wfPending),
-		Refused:   len(wfRefused),
-		Total:     len(wfOK) + len(wfPending) + len(wfRefused) + len(wfExpired) + len(usersTemp),
-		Expired:   len(wfExpired),
-		NotStated: len(usersTemp),
+	var works []*Work
+
+	for _, onboarding := range allOnboaring {
+		user, code, err := srvAuth.SrvUser.GetUsersByID(onboarding.UserId)
+		if err != nil {
+			logger.Error.Printf("No se pudo obtener al usaurio de la solicitud de onboarding, error: %s", err.Error())
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if user == nil {
+			logger.Info.Printf("No se pudo obtener al usaurio de la solicitud de onboarding, onboarding_id: " + onboarding.ID)
+			continue
+		}
+		works = append(works, &Work{
+			Process: "Onboarding",
+			User: User{
+				ID:             user.ID,
+				TypeDocument:   user.TypeDocument,
+				DocumentNumber: user.DocumentNumber,
+				ExpeditionDate: user.ExpeditionDate,
+				Email:          user.Email,
+				FirstName:      user.FirstName,
+				SecondName:     user.SecondName,
+				SecondSurname:  user.SecondSurname,
+				Age:            user.Age,
+				Gender:         user.Gender,
+				Nationality:    user.Nationality,
+				CivilStatus:    user.CivilStatus,
+				FirstSurname:   user.FirstSurname,
+				BirthDate:      user.BirthDate,
+				Country:        user.Country,
+				Department:     user.Department,
+				Cellphone:      user.Cellphone,
+				City:           user.City,
+				RealIp:         user.RealIp,
+				CreatedAt:      user.CreatedAt,
+				UpdatedAt:      user.UpdatedAt,
+			},
+			ClientID:  onboarding.ClientId,
+			RequestID: onboarding.RequestId,
+			Status:    onboarding.Status,
+			ExpiredAt: "-",
+			CreateAt:  onboarding.CreatedAt.String(),
+		})
 	}
+
+	for _, validation := range allValidation {
+		user, code, err := srvAuth.SrvUser.GetUsersByID(validation.UserID)
+		if err != nil {
+			logger.Error.Printf("No se pudo obtener al usaurio de la solicitud de onboarding, error: %s", err.Error())
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		if user == nil {
+			logger.Info.Printf("No se pudo obtener al usaurio de la solicitud de validacion de identidad, validation_id: " + validation.RequestId)
+			continue
+		}
+		works = append(works, &Work{
+			Process: "Validación de identidad",
+			User: User{
+				ID:             user.ID,
+				TypeDocument:   user.TypeDocument,
+				DocumentNumber: user.DocumentNumber,
+				ExpeditionDate: user.ExpeditionDate,
+				Email:          user.Email,
+				FirstName:      user.FirstName,
+				SecondName:     user.SecondName,
+				SecondSurname:  user.SecondSurname,
+				Age:            user.Age,
+				Gender:         user.Gender,
+				Nationality:    user.Nationality,
+				CivilStatus:    user.CivilStatus,
+				FirstSurname:   user.FirstSurname,
+				BirthDate:      user.BirthDate,
+				Country:        user.Country,
+				Department:     user.Department,
+				Cellphone:      user.Cellphone,
+				City:           user.City,
+				RealIp:         user.RealIp,
+				CreatedAt:      user.CreatedAt,
+				UpdatedAt:      user.UpdatedAt,
+			},
+			ClientID:  validation.ClientId,
+			RequestID: validation.RequestId,
+			Status:    validation.Status,
+			ExpiredAt: "-",
+			CreateAt:  validation.CreatedAt.String(),
+		})
+	}
+
+	for _, user := range usersTemp {
+		works = append(works, &Work{
+			Process: "System",
+			User: User{
+				ID:             user.ID,
+				TypeDocument:   user.TypeDocument,
+				DocumentNumber: user.DocumentNumber,
+				ExpeditionDate: user.ExpeditionDate,
+				Email:          user.Email,
+				FirstName:      user.FirstName,
+				SecondName:     user.SecondName,
+				SecondSurname:  user.SecondSurname,
+				Age:            user.Age,
+				Gender:         user.Gender,
+				Nationality:    user.Nationality,
+				CivilStatus:    user.CivilStatus,
+				FirstSurname:   user.FirstSurname,
+				BirthDate:      user.BirthDate,
+				Country:        user.Country,
+				Department:     user.Department,
+				Cellphone:      user.Cellphone,
+				City:           user.City,
+				RealIp:         user.RealIp,
+				CreatedAt:      user.CreatedAt,
+				UpdatedAt:      user.UpdatedAt,
+			},
+			ClientID:  -1,
+			RequestID: "-",
+			Status:    "No iniciado",
+			ExpiredAt: "-",
+			CreateAt:  user.CreatedAt.String(),
+		})
+	}
+
+	res.Data = works
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)

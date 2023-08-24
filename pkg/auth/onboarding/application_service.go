@@ -15,6 +15,7 @@ type PortsServerOnboarding interface {
 	GetOnboardingByID(id string) (*Onboarding, int, error)
 	GetAllOnboarding() ([]*Onboarding, error)
 	GetOnboardingByUserID(UserId string) (*Onboarding, int, error)
+	GetAllOnboardingByStatus(status string) ([]*Onboarding, error)
 }
 
 type service struct {
@@ -101,4 +102,8 @@ func (s *service) GetOnboardingByUserID(UserId string) (*Onboarding, int, error)
 		return nil, 22, err
 	}
 	return m, 29, nil
+}
+
+func (s *service) GetAllOnboardingByStatus(status string) ([]*Onboarding, error) {
+	return s.repository.getAllByStatus(status)
 }

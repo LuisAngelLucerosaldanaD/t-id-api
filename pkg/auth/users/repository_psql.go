@@ -128,7 +128,7 @@ func (s *psql) getLasted(email string, limit, offset int) ([]*Users, error) {
 
 func (s *psql) getNotStarted() ([]*Users, error) {
 	var ms []*Users
-	const psqlGetAll = ` SELECT id , type_document, document_number, expedition_date, email, first_name, second_name, second_surname, age, gender, nationality, civil_status, first_surname, birth_date, country, department, city, real_ip, cellphone, created_at, updated_at FROM auth.users where document_number = 0 or document_number is null`
+	const psqlGetAll = ` SELECT id , type_document, document_number, expedition_date, email, first_name, second_name, second_surname, age, gender, nationality, civil_status, first_surname, birth_date, country, department, city, real_ip, cellphone, created_at, updated_at FROM auth.users where document_number = '' or document_number is null`
 
 	err := s.DB.Select(&ms, psqlGetAll)
 	if err != nil {
