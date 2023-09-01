@@ -369,22 +369,23 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 
 	if files != nil {
 		for _, file := range files {
-			fileS3, code, err := srvCfg.SrvFilesS3.GetFileByPath(file.Path, file.Name)
+			/*fileS3, code, err := srvCfg.SrvFilesS3.GetFileByPath(file.Path, file.Name)
 			if err != nil {
 				logger.Error.Printf("No se pudo descargar el archivo, error: %s", err.Error())
 				res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 				return c.Status(http.StatusAccepted).JSON(res)
-			}
+			}*/
 
 			switch file.Type {
 			case 1:
-				selfieImg = fileS3.Encoding
+				// selfieImg = fileS3.Encoding
+				selfieImg = strconv.FormatInt(file.ID, 10)
 				break
 			case 2:
-				frontDocument = fileS3.Encoding
+				frontDocument = strconv.FormatInt(file.ID, 10)
 				break
 			default:
-				backDocument = fileS3.Encoding
+				backDocument = strconv.FormatInt(file.ID, 10)
 				break
 			}
 		}
@@ -660,6 +661,58 @@ func (h *handlerUser) getFinishValidationIdentity(c *fiber.Ctx) error {
 	}
 
 	res.Data = validation.Status == "finished"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// getFinishValidationIdentity godoc
+// @Summary Permite validar si ha terminado la validación de identidad de un usuario
+// @Description Método que permite validar si ha terminado la validación de identidad de un usuario
+// @tags User
+// @Accept json
+// @Produce json
+// @Param id path string true "Id del archivo"
+// @Success 200 {object} ResponseGetUserFile
+// @Router /api/v1/user/file [get]
+func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
+	res := ResponseGetUserFile{Error: true}
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+
+	fileID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		logger.Error.Printf("El id del archivo es invalido")
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	file, code, err := srvCfg.SrvFiles.GetFilesByID(fileID)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener la validación del usuario, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if file == nil {
+		logger.Error.Printf("No se pudo obtener el archivo del usuario solicitado")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	fileS3, code, err := srvCfg.SrvFilesS3.GetFileByPath(file.Path, file.Name)
+	if err != nil {
+		logger.Error.Printf("No se pudo descargar el archivo, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if fileS3 == nil {
+		logger.Error.Printf("No se pudo descargar el archivo solicitado")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = fileS3.Encoding
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)

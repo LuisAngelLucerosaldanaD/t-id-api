@@ -38,6 +38,7 @@ func (s *psql) create(m *ValidationRequest) error {
 		m.RequestId,
 		m.ExpiredAt,
 		m.UserID,
+		m.Status,
 	).Scan(&m.ID, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		return err

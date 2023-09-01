@@ -12,5 +12,5 @@ func RouterOnboarding(app *fiber.App, db *sqlx.DB, txID string) {
 	user := v1.Group("/onboarding")
 	user.Post("/", h.Onboarding)
 	user.Post("/process", h.FinishOnboarding)
-	user.Post("/validate-identity", h.ValidateIdentity)
+	user.Post("/validate_identity", h.ValidateIdentity)
 }

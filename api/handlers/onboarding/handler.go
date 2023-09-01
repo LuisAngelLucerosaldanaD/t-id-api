@@ -145,7 +145,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 	}
 
 	res.Data = &Onboarding{
-		Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?onboarding_id=%s&user_id=%s&email=%s&process=enroll", onboarding.ID, user.ID, req.Email),
+		Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?process=enroll&onboarding_id=%s&user_id=%s&email=%s", onboarding.ID, user.ID, req.Email),
 		Method: "onboarding",
 	}
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
@@ -441,6 +441,132 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(res)
 }
 
+// FinishOnboardingV2 godoc
+// @Summary Método que permite terminar el enrolamiento de un usuario
+// @Description Método que permite terminar el enrolamiento de un usuario que ha sido validado desde OnlyOne
+// @tags Onboarding
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Param RequestProcessOnboarding body RequestProcessOnboarding true "Datos para validar el enrolamiento del usuario"
+// @Success 200 {object} ResProcessOnboarding
+// @Router /api/v1/onboarding/process [post]
+func (h *handlerOnboarding) FinishOnboardingV2(c *fiber.Ctx) error {
+	res := ResProcessOnboarding{Error: true}
+	req := RequestProcessOnboarding{}
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByID(req.Onboarding)
+	if err != nil {
+		logger.Error.Printf("couldn't get onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding.Status != "started" {
+		res.Code, res.Type, res.Msg = 22, 1, "El usuario ya ha finalizado el proceso de enrolamiento"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	user, code, err := srvAuth.SrvUser.GetUsersByID(req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't get user by identity number, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		logger.Error.Printf("couldn't get user by identity number")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	f, err := srvCfg.SrvFilesS3.UploadFile(req.UserID, req.UserID+"_selfie.jpg", req.Selfie)
+	if err != nil {
+		logger.Error.Printf("couldn't upload file s3: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create selfie image, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Carga de Selfie", "info", "Carga de la imagen de Selfie", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	f, err = srvCfg.SrvFilesS3.UploadFile(req.UserID, req.UserID+"_doc_front.jpg", req.DocumentFront)
+	if err != nil {
+		logger.Error.Printf("couldn't upload file document front to s3: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 2, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create file document front, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	f, err = srvCfg.SrvFilesS3.UploadFile(req.UserID, req.UserID+"_doc_back.jpg", req.DocumentBack)
+	if err != nil {
+		logger.Error.Printf("couldn't upload file document back to s3: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 3, req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create file document back, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Carga del documento", "info", "Carga de documento de identidad", req.UserID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "life-test")
+	if err != nil {
+		logger.Error.Printf("couldn't update onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = "Información cargada correctamente"
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
 // ValidateIdentity godoc
 // @Summary Método que permite finalizar la validación de identidad de un usuario
 // @Description Método que permite finalizar la validación de identidad de un usuario por la aplicación de OnlyOne
@@ -450,7 +576,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param RequestValidationIdentity body RequestValidationIdentity true "Datos para validar la identidad del usuario"
 // @Success 200 {object} ResProcessOnboarding
-// @Router /api/v1/onboarding/validate-identity [post]
+// @Router /api/v1/onboarding/validate_identity [post]
 func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 	res := ResProcessOnboarding{Error: true}
 	req := RequestValidationIdentity{}
@@ -463,20 +589,20 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	onboarding, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByID(req.ValidationId)
+	validation, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByID(req.ValidationId)
 	if err != nil {
 		logger.Error.Printf("couldn't bind get validation request: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if onboarding == nil {
+	if validation == nil {
 		logger.Error.Printf("couldn't bind get validation request")
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if onboarding.Status != "pending" {
+	if validation.Status != "pending" {
 		logger.Error.Printf("La validación de identidad ya ha sido realizada o no existe")
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)

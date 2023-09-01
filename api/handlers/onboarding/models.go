@@ -43,7 +43,7 @@ type ResProcessOnboarding struct {
 }
 
 type RequestValidationIdentity struct {
-	FaceImage    string `json:"face_image"`
+	FaceImage    string `json:"selfie"`
 	UserID       string `json:"user_id"`
 	ValidationId int64  `json:"validation_id"`
 }
