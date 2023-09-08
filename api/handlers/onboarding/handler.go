@@ -10,9 +10,9 @@ import (
 	"check-id-api/internal/send_grid"
 	"check-id-api/internal/template"
 	"check-id-api/pkg/auth"
+	user2 "check-id-api/pkg/auth/user"
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
-	"check-id-api/pkg/wf"
 	"encoding/base64"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -45,8 +45,6 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 	req := requestCreateOnboarding{}
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
-	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -55,7 +53,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUsersByEmail(req.Email)
+	user, code, err := srvAuth.SrvUser.GetUserByEmail(req.Email)
 	if err != nil {
 		logger.Error.Printf("couldn't bind get user by email: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -73,7 +71,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		if onboarding != nil && (onboarding.Status == "finished" || onboarding.Status == "pending") {
 			// TODO validar el número máximo de las consultas de validación y el tiempo de vida
 			ttl := time.Now().AddDate(0, 0, 1)
-			validation, code, err := srvCfg.SrvValidationRequest.CreateValidationRequest(req.ClientId, 1, req.RequestId, ttl, user.ID, "pending")
+			validation, code, err := srvAuth.SrvLifeTest.CreateLifeTest(req.ClientId, 1, req.RequestId, ttl, user.ID, "pending")
 			if err != nil {
 				logger.Error.Printf("couldn't bind create validation request: %v", err)
 				res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -100,7 +98,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		}
 
 		if onboarding == nil {
-			_, err = srvAuth.SrvUser.DeleteUsers(user.ID)
+			_, err = srvAuth.SrvUser.DeleteUser(user.ID)
 			if err != nil {
 				logger.Error.Printf("No se pudo eliminar el usuario, error: %v", err)
 				res.Code, res.Type, res.Msg = 108, 1, "No se pudo eliminar el usuario, error: "+err.Error()
@@ -109,9 +107,34 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		}
 	}
 
-	user, code, err = srvAuth.SrvUser.CreateUsers(uuid.New().String(), nil, req.DocumentNumber, nil, req.Email, req.FirstName, req.SecondName, req.SecondSurname, nil, nil, req.Nationality, nil, req.FirstSurname, nil, nil, nil, nil, c.IP(), req.Cellphone)
+	user, code, err = srvAuth.SrvUser.CreateUser(&user2.User{
+		ID:             uuid.New().String(),
+		Nickname:       req.Email,
+		Email:          req.Email,
+		Password:       req.DocumentNumber,
+		FirstName:      req.FirstName,
+		SecondName:     req.SecondName,
+		FirstSurname:   req.FirstSurname,
+		SecondSurname:  req.SecondSurname,
+		DocumentNumber: req.DocumentNumber,
+		Cellphone:      req.Cellphone,
+		Nationality:    req.Nationality,
+		RealIp:         c.IP(),
+		StatusId:       0,
+		FailedAttempts: 0,
+		IsDeleted:      false,
+		CreatedAt:      time.Time{},
+		UpdatedAt:      time.Time{},
+	})
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvAuth.SrvUserRole.CreateUseRole(uuid.New().String(), user.ID, "14cbf8d2-485a-4fbe-baa6-16273c765f14")
+	if err != nil {
+		logger.Error.Printf("couldn't create user role, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
@@ -123,21 +146,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvWf.SrvStatusReq.CreateStatusRequest("pendiente", "Pendiente por validación de identidad", user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't create status request, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvWf.SrvWork.CreateWorkValidation("pending", user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't start work, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	onboarding, code, err := srvAuth.SrvOnboarding.CreateOnboarding(uuid.New().String(), req.ClientId, req.RequestId, user.ID, "started")
+	onboarding, code, err := srvAuth.SrvOnboarding.CreateOnboarding(uuid.New().String(), req.ClientId, req.RequestId, user.ID, "started", "")
 	if err != nil {
 		logger.Error.Printf("couldn't create onboarding, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -167,7 +176,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	res := ResProcessOnboarding{Error: true}
 	req := RequestProcessOnboarding{}
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	e := env.NewConfiguration()
@@ -227,7 +235,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
 
-		_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.ID, "refused")
+		_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.ID, "refused", "")
 		if err != nil {
 			logger.Error.Printf("couldn't update onboarding, error: %v", err)
 			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -239,7 +247,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUsersByID(req.UserID)
+	user, code, err := srvAuth.SrvUser.GetUserByID(req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't get user by identity number, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -259,7 +267,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 1, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create selfie image, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -281,7 +289,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 2, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 2, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create file document front, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -296,7 +304,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 3, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 3, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create file document back, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -311,13 +319,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "pending")
-	if err != nil {
-		logger.Error.Printf("couldn't create onboarding, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
 	personSrv := persons.Persons{IdentityNumber: user.DocumentNumber}
 	basicData, err := personSrv.GetPersonByIdentityNumber()
 	if err != nil {
@@ -327,15 +328,40 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	}
 
 	birthDate, _ := time.Parse("02-01-2006", basicData.BirthDate)
-	expeditionDate, _ := time.Parse("02-01-2006", basicData.ExpeditionDate)
 	age := int32(time.Now().Year() - birthDate.Year())
-
 	nationality := "Colombia"
-	user, code, err = srvAuth.SrvUser.UpdateUsers(user.ID, nil, user.DocumentNumber, &expeditionDate,
-		user.Email, &basicData.FirstName, &basicData.SecondName, &basicData.SecondSurname, &age, &basicData.Gender,
-		&nationality, nil, &basicData.Surname, &birthDate, &nationality, nil, nil, user.RealIp, user.Cellphone)
+
+	user, code, err = srvAuth.SrvUser.UpdateUser(&user2.User{
+		ID:             user.ID,
+		Nickname:       user.Email,
+		Email:          user.Email,
+		Password:       strings.TrimSpace(strings.ToLower(basicData.FirstName) + user.DocumentNumber),
+		FirstName:      &basicData.FirstName,
+		SecondName:     &basicData.SecondName,
+		FirstSurname:   &basicData.Surname,
+		SecondSurname:  &basicData.SecondSurname,
+		Age:            &age,
+		DocumentNumber: user.DocumentNumber,
+		Cellphone:      user.Cellphone,
+		Gender:         &basicData.Gender,
+		Nationality:    &nationality,
+		RealIp:         user.RealIp,
+		StatusId:       0,
+		FailedAttempts: 0,
+		BirthDate:      &birthDate,
+		IsDeleted:      false,
+		CreatedAt:      time.Time{},
+		UpdatedAt:      time.Time{},
+	})
 	if err != nil {
 		logger.Error.Printf("couldn't update basic data of user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvAuth.SrvUserRole.UpdateUseRoleByUserID(user.ID, "09ecd353-ee2b-42a0-88bc-45d118d7b65d")
+	if err != nil {
+		logger.Error.Printf("couldn't update user role, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
@@ -362,10 +388,10 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvAuth.SrvValidationUsers.CreateValidationUsers(uuid.New().String(), trxId, req.UserID)
+	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "pending", trxId)
 	if err != nil {
-		logger.Error.Printf("No se pudo registrar el id de la transacción, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+		logger.Error.Printf("couldn't create onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -373,14 +399,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	if err != nil {
 		logger.Error.Printf("couldn't create traceability, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvWf.SrvWork.CreateWorkValidation("finished", req.UserID)
-	if err != nil {
-		logger.Error.Printf("couldn't start work, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		res.Msg = err.Error()
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -482,7 +500,7 @@ func (h *handlerOnboarding) FinishOnboardingV2(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUsersByID(req.UserID)
+	user, code, err := srvAuth.SrvUser.GetUserByID(req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't get user by identity number, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -502,7 +520,7 @@ func (h *handlerOnboarding) FinishOnboardingV2(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 1, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create selfie image, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -524,7 +542,7 @@ func (h *handlerOnboarding) FinishOnboardingV2(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 2, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 2, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create file document front, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -539,7 +557,7 @@ func (h *handlerOnboarding) FinishOnboardingV2(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 3, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 3, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create file document back, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -554,7 +572,7 @@ func (h *handlerOnboarding) FinishOnboardingV2(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "life-test")
+	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "life-test", onboarding.TransactionId)
 	if err != nil {
 		logger.Error.Printf("couldn't update onboarding, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -580,6 +598,7 @@ func (h *handlerOnboarding) FinishOnboardingV2(c *fiber.Ctx) error {
 func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 	res := ResProcessOnboarding{Error: true}
 	req := RequestValidationIdentity{}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
@@ -589,7 +608,7 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	validation, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByID(req.ValidationId)
+	validation, code, err := srvAuth.SrvLifeTest.GetLifeTestByID(req.ValidationId)
 	if err != nil {
 		logger.Error.Printf("couldn't bind get validation request: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -615,7 +634,7 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fileSelfie, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(1, req.UserID)
+	fileSelfie, code, err := srvCfg.SrvFiles.GetFileByTypeAndUserID(1, req.UserID)
 	if err != nil {
 		logger.Error.Printf("no se pudo obtener la imagen del documento de identidad, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -649,7 +668,7 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 	}
 
 	if !resp {
-		_, code, err = srvCfg.SrvValidationRequest.UpdateStatusValidationRequest(req.ValidationId, "refused")
+		_, code, err = srvAuth.SrvLifeTest.UpdateStatusLifeTest(req.ValidationId, "refused")
 		if err != nil {
 			logger.Error.Printf("couldn't bind update validation request: %v", err)
 			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -661,7 +680,7 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvValidationRequest.UpdateStatusValidationRequest(req.ValidationId, "callback")
+	_, code, err = srvAuth.SrvLifeTest.UpdateStatusLifeTest(req.ValidationId, "callback")
 	if err != nil {
 		logger.Error.Printf("couldn't bind update validation request: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)

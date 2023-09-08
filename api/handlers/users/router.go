@@ -1,6 +1,7 @@
 package users
 
 import (
+	"check-id-api/internal/middleware"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 )
@@ -11,14 +12,13 @@ func RouterUser(app *fiber.App, db *sqlx.DB, txID string) {
 	v1 := api.Group("/v1")
 	user := v1.Group("/user")
 	user.Post("/register", h.createUser)
-	/*user.Post("/upload-selfie", h.uploadSelfie)
-	user.Post("/upload-documents", h.uploadDocuments)
-	user.Post("/basic-information", h.registerBasicInformation)*/
-	user.Get("/user-session/:identifier", h.getUserSession)
-	user.Get("/users-lasted/:email/:limit/:offset", h.getLastedUsers)
-	user.Get("/data-pending", h.getUsersDataPending)
-	user.Get("/validate/:identity_number", h.validateUser)
-	user.Get("/finish-onboarding/:id", h.getFinishOnboarding)
-	user.Get("/finish-validation/:id", h.getFinishValidationIdentity)
-	user.Get("/file/:id", h.getUserFile)
+	user.Get("/user-session/:identifier", middleware.JWTProtected(), h.getUserSession)
+	user.Get("/role", middleware.JWTProtected(), h.getUserSession)
+	user.Get("/user-lasted/:email/:limit/:offset", middleware.JWTProtected(), h.getLastedUsers)
+	user.Get("/data-pending", middleware.JWTProtected(), h.getUsersDataPending)
+	user.Get("/validate", middleware.JWTProtected(), h.validateUser)
+	user.Get("/finish-onboarding", middleware.JWTProtected(), h.getFinishOnboarding)
+	user.Get("/finish-validation", middleware.JWTProtected(), h.getFinishValidationIdentity)
+	user.Get("/file/:id", middleware.JWTProtected(), h.getUserFile)
+	user.Get("/:identifier", middleware.JWTProtected(), h.getUserSession)
 }

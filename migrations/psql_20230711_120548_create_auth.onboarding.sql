@@ -1,13 +1,16 @@
-
 -- +migrate Up
-CREATE TABLE IF NOT EXISTS auth.onboarding(
-    id uuid NOT NULL PRIMARY KEY,
-    client_id BIGINT  NOT NULL,
-    request_id VARCHAR (255) NOT NULL,
-    user_id VARCHAR (50) NOT NULL,
-    status varchar (50) not null,
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP NOT NULL DEFAULT now()
+CREATE TABLE IF NOT EXISTS auth.onboarding
+(
+    id             uuid         NOT NULL PRIMARY KEY,
+    client_id      BIGINT       NOT NULL,
+    request_id     VARCHAR(100) NOT NULL,
+    user_id        uuid         NOT NULL,
+    status         varchar(50)  not null,
+    transaction_id varchar(100) NULL,
+    created_at     TIMESTAMP    NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMP    NOT NULL DEFAULT now(),
+    constraint FK_user_onboarding foreign key (user_id) references auth.user (id),
+    constraint FK_client_onboarding foreign key (client_id) references auth.client (id)
 );
 
 -- +migrate Down

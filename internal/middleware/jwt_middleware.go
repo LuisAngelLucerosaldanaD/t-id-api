@@ -3,7 +3,10 @@ package middleware
 import (
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
+	"check-id-api/internal/models"
 	"crypto/rsa"
+	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
@@ -29,6 +32,12 @@ func init() {
 	}
 }
 
+type jwtCustomClaims struct {
+	User      *models.UserToken `json:"user"`
+	IPAddress string            `json:"ip_address"`
+	jwt.RegisteredClaims
+}
+
 func JWTProtected() fiber.Handler {
 	config := jwtware.Config{
 		ErrorHandler:  jwtError,
@@ -45,4 +54,44 @@ func jwtError(c *fiber.Ctx, err error) error {
 	}
 	return c.Status(fiber.StatusUnauthorized).
 		JSON(fiber.Map{"status": "error", "message": "Invalid or expired JWT", "data": nil})
+}
+
+func GetUser(c *fiber.Ctx) (*models.UserToken, error) {
+	bearer := c.Get("Authorization")
+	tkn := bearer[7:]
+
+	var u *models.UserToken
+	verifyFunction := func(tkn *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	}
+
+	token, err := jwt.ParseWithClaims(tkn, &jwtCustomClaims{}, verifyFunction)
+	if err != nil {
+		var validationError *jwt.ValidationError
+		switch {
+		case errors.As(err, &validationError):
+			vErr := err.(*jwt.ValidationError)
+			switch vErr.Errors {
+			case jwt.ValidationErrorExpired:
+				logger.Warning.Printf("token expirado: %v", err)
+				return u, err
+			default:
+				logger.Warning.Printf("Error de validacion del token: %v", err)
+				return u, err
+			}
+		default:
+			logger.Warning.Printf("Error al procesar el token: %v", err)
+			return u, err
+		}
+	}
+	u = token.Claims.(*jwtCustomClaims).User
+	if !token.Valid {
+		logger.Warning.Printf("Token no Valido: %v", err)
+		return u, fmt.Errorf("token no Valido")
+	}
+	if c.IP() != u.RealIP {
+		logger.Warning.Printf("token creado en un origen diferente : %v", err)
+		return u, fmt.Errorf("token creado en un origen diferente")
+	}
+	return u, nil
 }

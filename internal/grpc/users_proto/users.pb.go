@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.21.9
-// source: api/grpc/proto/users.proto
+// source: api/grpc/proto/user.proto
 
 package users_proto
 

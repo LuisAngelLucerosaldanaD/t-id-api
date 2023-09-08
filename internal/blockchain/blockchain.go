@@ -9,7 +9,7 @@ import (
 	"check-id-api/internal/grpc/wallet_proto"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/ws"
-	"check-id-api/pkg/auth/users"
+	"check-id-api/pkg/auth/user"
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
@@ -112,7 +112,7 @@ func CreateTransaction(identifier []Identifier, nameTransaction, descriptionTran
 	return resData.Id, nil
 }
 
-func CreateTransactionV2(user *users.Users, nameTransaction, descriptionTransaction, to, identityNumber string) (string, error) {
+func CreateTransactionV2(user *user.User, nameTransaction, descriptionTransaction, to, identityNumber string) (string, error) {
 
 	identifier := []Identifier{
 		{
@@ -257,7 +257,7 @@ func CreateTransactionV2(user *users.Users, nameTransaction, descriptionTransact
 	return resData.Id, nil
 }
 
-func CreateAccountAndWallet(user *users.Users, fileB64 string, fileName string) (*WalletInfo, error) {
+func CreateAccountAndWallet(user *user.User, fileB64 string, fileName string) (*WalletInfo, error) {
 	e := env.NewConfiguration()
 
 	connAuth, err := grpc.Dial(e.AuthService.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))

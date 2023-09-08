@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type handlerWork struct {
@@ -25,7 +24,7 @@ type handlerWork struct {
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param nit path string true "NIT del cliente"
 // @Success 200 {object} ResClient
-// @Router /api/v1/clients/{nit} [get]
+// @Router /api/v1/client/{nit} [get]
 func (h *handlerWork) getDataClient(c *fiber.Ctx) error {
 	res := ResClient{Error: true}
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
@@ -36,7 +35,7 @@ func (h *handlerWork) getDataClient(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	client, code, err := srvCfg.SrvClients.GetClientsByNit(nit)
+	client, code, err := srvCfg.SrvClients.GetClientByNit(nit)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el cliente, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -52,7 +51,7 @@ func (h *handlerWork) getDataClient(c *fiber.Ctx) error {
 	bannerId, _ := strconv.ParseInt(client.Banner, 10, 64)
 	smallId, _ := strconv.ParseInt(client.LogoSmall, 10, 64)
 
-	fileBanner, code, err := srvCfg.SrvFiles.GetFilesByID(bannerId)
+	fileBanner, code, err := srvCfg.SrvFiles.GetFileByID(bannerId)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener la data del banner, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -66,7 +65,7 @@ func (h *handlerWork) getDataClient(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fileSmall, code, err := srvCfg.SrvFiles.GetFilesByID(smallId)
+	fileSmall, code, err := srvCfg.SrvFiles.GetFileByID(smallId)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener la data del logo small, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -105,7 +104,7 @@ func (h *handlerWork) getDataClient(c *fiber.Ctx) error {
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param Client body Client true "Datos del cliente a crear"
 // @Success 200 {object} ResAnny
-// @Router /api/v1/clients [post]
+// @Router /api/v1/client [post]
 func (h *handlerWork) CreateClient(c *fiber.Ctx) error {
 	res := ResAnny{Error: true}
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
@@ -117,7 +116,7 @@ func (h *handlerWork) CreateClient(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	client, code, err := srvCfg.SrvClients.GetClientsByNit(req.Nit)
+	client, code, err := srvCfg.SrvClients.GetClientByNit(req.Nit)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el cliente, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -137,7 +136,7 @@ func (h *handlerWork) CreateClient(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fileBanner, code, err := srvCfg.SrvFiles.CreateFiles(fileS3Banner.Path, fileS3Banner.FileName, 6, "2435b1d2-6e0a-4541-a3a5-810b22e961d1")
+	fileBanner, code, err := srvCfg.SrvFiles.CreateFile(fileS3Banner.Path, fileS3Banner.FileName, 6, "2435b1d2-6e0a-4541-a3a5-810b22e961d1")
 	if err != nil {
 		logger.Error.Printf("No se pudo crear la data del banner, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -151,14 +150,14 @@ func (h *handlerWork) CreateClient(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fileSmall, code, err := srvCfg.SrvFiles.CreateFiles(fileS3Small.Path, fileS3Small.FileName, 7, "2435b1d2-6e0a-4541-a3a5-810b22e961d1")
+	fileSmall, code, err := srvCfg.SrvFiles.CreateFile(fileS3Small.Path, fileS3Small.FileName, 7, "2435b1d2-6e0a-4541-a3a5-810b22e961d1")
 	if err != nil {
 		logger.Error.Printf("No se pudo cargar la data del logo small, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvClients.CreateClients(req.FullName, req.Nit, strconv.FormatInt(fileBanner.ID, 10), strconv.FormatInt(fileSmall.ID, 10), req.MainColor, req.SecondColor, req.UrlRedirect, req.UrlApi)
+	_, code, err = srvCfg.SrvClients.CreateClient(req.FullName, req.Nit, strconv.FormatInt(fileBanner.ID, 10), strconv.FormatInt(fileSmall.ID, 10), req.MainColor, req.SecondColor, req.UrlRedirect, req.UrlApi)
 	if err != nil {
 		logger.Error.Printf("No se pudo crear al cliente, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -166,147 +165,6 @@ func (h *handlerWork) CreateClient(c *fiber.Ctx) error {
 	}
 
 	res.Data = "Cliente creado correctamente"
-	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-	res.Error = false
-	return c.Status(http.StatusOK).JSON(res)
-}
-
-// GetValidationRequest godoc
-// @Summary Obtiene el flujo de validación de un usuario
-// @Description Método para obtener el flujo de validación de identidad de un usuario
-// @tags Client
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param nit path string true "NIT del cliente"
-// @Param request_id path string true "Número de solicitud"
-// @Param document_number path string true "Número de identificación del usuario"
-// @Success 200 {object} ResAnny
-// @Router /api/v1/validation-workflow/{nit}/{request_id}/{document_number} [get]
-func (h *handlerWork) GetValidationRequest(c *fiber.Ctx) error {
-	res := ResAnny{Error: true}
-	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
-	nit := c.Params("nit")
-	requestID := c.Params("request_id")
-	documentNumber := c.Params("document_number")
-	if nit == "" || requestID == "" {
-		logger.Error.Printf("No se pudo parasear los valores de busqueda")
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	client, code, err := srvCfg.SrvClients.GetClientsByNit(nit)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el cliente, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if client == nil {
-		logger.Error.Printf("No se pudo obtener el cliente")
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if requestID == "0" {
-		res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-		res.Error = false
-		return c.Status(http.StatusOK).JSON(res)
-	}
-
-	validationRequest, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, requestID)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener la configuracion de la validación de identidad, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if validationRequest == nil {
-		logger.Error.Printf("No se pudo obtener la data del flujo de validación de identidad")
-		res.Code, res.Type, res.Msg = 404, 1, "No se encontró información sobre el flujo de validación de identidad con los datos ingresados"
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if validationRequest.UserID != documentNumber {
-		res.Code, res.Type, res.Msg = 22, 1, "Este usuario no tiene configurado una solicitud de validación de identidad en el flujo"
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if validationRequest.Status != "pending" {
-		res.Code, res.Type, res.Msg = 22, 1, "El flujo de validación de identidad ya ha sido realizada por la persona asignada"
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	dateExpired := validationRequest.ExpiredAt.Sub(time.Now())
-	if dateExpired.Minutes() <= 0 {
-		res.Code, res.Type, res.Msg = 22, 1, "Se ha superado la fecha máxima configurada para este flujo de validación de identidad"
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if validationRequest.MaxNumValidation == 0 {
-		res.Code, res.Type, res.Msg = 22, 1, "Se ha superado la cantidad máximas de consultas configuradas para este flujo de validación de identidad"
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	res.Data = validationRequest
-	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-	res.Error = false
-	return c.Status(http.StatusOK).JSON(res)
-}
-
-// CreateValidationRequest godoc
-// @Summary Crea el flujo de validación de identidad
-// @Description Método para crear el flujo de validación de identidad
-// @tags Client
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param ReqCreateWorkflow body ReqCreateWorkflow true "Datos para creación del flujo"
-// @Success 200 {object} ResAnny
-// @Router /api/v1/validation-workflow [post]
-func (h *handlerWork) CreateValidationRequest(c *fiber.Ctx) error {
-	res := ResAnny{Error: true}
-	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
-	req := ReqCreateWorkflow{}
-	err := c.BodyParser(req)
-	if err != nil {
-		logger.Error.Printf("No se pudo parsear el modelo de la solicitud, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	client, code, err := srvCfg.SrvClients.GetClientsByNit(req.Nit)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el cliente, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if client == nil {
-		res.Code, res.Type, res.Msg = 403, 1, "No se encontró un cliente con los datos ingresados"
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	identityReq, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByClientIDAndRequestID(client.ID, req.RequestId)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el flujo de validacion de identidad, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if identityReq != nil {
-		res.Code, res.Type, res.Msg = 5, 1, "El flujo de validación para este usuario ya existe"
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvCfg.SrvValidationRequest.CreateValidationRequest(client.ID, req.MaxNumValidation, req.RequestId, req.ExpiredAt, req.UserIdentification, "pending")
-	if err != nil {
-		logger.Error.Printf("No se pudo crear el flujo de valdiacion, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	res.Data = "Flujo de validación de identidad creado correctamente"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)

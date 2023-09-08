@@ -19,8 +19,6 @@ import (
 // @tag.description Métodos referentes al usuario
 // @tag.name Traceability
 // @tag.description Métodos referentes a la trazabilidad
-// @tag.name Work
-// @tag.description Métodos referentes al trabajo registrado
 // @tag.name Client
 // @tag.description Métodos referentes al cliente
 // @tag.name Onboarding

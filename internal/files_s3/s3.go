@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	AWS_BUCKET = "bjungle-files"
+	AWS_BUCKET = "bjungle-file"
 	AWS_REGION = "us-east-1"
 )
 

@@ -25,7 +25,7 @@ type Transaction struct {
 	Amount float64 `json:"amount,omitempty"`
 	TypeId int     `json:"type_id,omitempty"`
 	Data   string  `json:"data,omitempty"`
-	Files  []*File `json:"files,omitempty"`
+	Files  []*File `json:"file,omitempty"`
 }
 type DataCreateTransaction struct {
 	Category    string       `json:"category"`
@@ -72,7 +72,7 @@ type DataResponseCreateTransaction struct {
 	TypeId    int32   `json:"type_id,omitempty"`
 	Data      string  `json:"data,omitempty"`
 	Block     int64   `json:"block,omitempty"`
-	Files     string  `json:"files,omitempty"`
+	Files     string  `json:"file,omitempty"`
 	CreatedAt string  `json:"created_at,omitempty"`
 	UpdatedAt string  `json:"updated_at,omitempty"`
 }

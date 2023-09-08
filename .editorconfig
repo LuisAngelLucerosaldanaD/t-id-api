@@ -8,7 +8,7 @@ end_of_line = lf
 insert_final_newline = true
 charset = utf-8
 
-# go files 8 space indentation
+# go file 8 space indentation
 # indentation type tab
 [*.go]
 indent_style = tab

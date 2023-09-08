@@ -30,7 +30,7 @@ type RequestCreateTransaction struct {
 	Amount float64 `protobuf:"fixed64,3,opt,name=amount,proto3" json:"amount,omitempty"`
 	TypeId int32   `protobuf:"varint,4,opt,name=type_id,json=typeId,proto3" json:"type_id,omitempty"`
 	Data   string  `protobuf:"bytes,5,opt,name=data,proto3" json:"data,omitempty"`
-	Files  []*File `protobuf:"bytes,6,rep,name=files,proto3" json:"files,omitempty"`
+	Files  []*File `protobuf:"bytes,6,rep,name=file,proto3" json:"file,omitempty"`
 }
 
 func (x *RequestCreateTransaction) Reset() {
@@ -387,7 +387,7 @@ type Transaction struct {
 	TypeId    int32   `protobuf:"varint,5,opt,name=type_id,json=typeId,proto3" json:"type_id,omitempty"`
 	Data      string  `protobuf:"bytes,6,opt,name=data,proto3" json:"data,omitempty"`
 	Block     int64   `protobuf:"varint,7,opt,name=block,proto3" json:"block,omitempty"`
-	Files     string  `protobuf:"bytes,8,opt,name=files,proto3" json:"files,omitempty"`
+	Files     string  `protobuf:"bytes,8,opt,name=file,proto3" json:"file,omitempty"`
 	CreatedAt string  `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt string  `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 }
@@ -1486,7 +1486,7 @@ var file_api_grpc_proto_transactions_proto_goTypes = []interface{}{
 	(*ResCreateTransactionBySystem)(nil),  // 16: transactions_proto.ResCreateTransactionBySystem
 }
 var file_api_grpc_proto_transactions_proto_depIdxs = []int32{
-	1,  // 0: transactions_proto.RequestCreateTransaction.files:type_name -> transactions_proto.File
+	1,  // 0: transactions_proto.RequestCreateTransaction.file:type_name -> transactions_proto.File
 	3,  // 1: transactions_proto.Identifier.attributes:type_name -> transactions_proto.Attribute
 	5,  // 2: transactions_proto.ResponseCreateTransaction.data:type_name -> transactions_proto.Transaction
 	5,  // 3: transactions_proto.ResponseGetTransactionById.data:type_name -> transactions_proto.Transaction

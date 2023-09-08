@@ -1,7 +1,7 @@
 package users
 
 import (
-	"check-id-api/pkg/auth/users"
+	"check-id-api/pkg/auth/user"
 	"time"
 )
 
@@ -14,11 +14,11 @@ type responseAnny struct {
 }
 
 type resCreateUser struct {
-	Error bool         `json:"error"`
-	Data  *users.Users `json:"data"`
-	Code  int          `json:"code"`
-	Type  int          `json:"type"`
-	Msg   string       `json:"msg"`
+	Error bool       `json:"error"`
+	Data  *user.User `json:"data"`
+	Code  int        `json:"code"`
+	Type  int        `json:"type"`
+	Msg   string     `json:"msg"`
 }
 
 type reqUploadSelfie struct {
@@ -32,39 +32,26 @@ type reqUploadDocument struct {
 	DocumentBackImg  string `json:"document_back_img"`
 }
 
-type requestValidateIdentity struct {
-	Id             string     `json:"id"`
-	TypeDocument   string     `json:"type_document"`
-	DocumentNumber string     `json:"document_number"`
-	ExpeditionDate *time.Time `json:"expedition_date"`
-	Email          string     `json:"email"`
-	FirstName      string     `json:"first_name"`
-	SecondName     string     `json:"second_name"`
-	SecondSurname  string     `json:"second_surname"`
-	Age            int32      `json:"age"`
-	Gender         string     `json:"gender"`
-	Nationality    string     `json:"nationality"`
-	CivilStatus    string     `json:"civil_status"`
-	FirstSurname   string     `json:"first_surname"`
-	BirthDate      *time.Time `json:"birth_date"`
-	Country        string     `json:"country"`
-	Department     string     `json:"department"`
-	City           string     `json:"city"`
+type RequestCreateUser struct {
+	Id             string `json:"id"`
+	DocumentNumber string `json:"document_number"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	Cellphone      string `json:"cellphone"`
 }
 
 type resGetUserSession struct {
-	Error bool            `json:"error"`
-	Data  *UserValidation `json:"data"`
-	Code  int             `json:"code"`
-	Type  int             `json:"type"`
-	Msg   string          `json:"msg"`
+	Error bool   `json:"error"`
+	Data  *User  `json:"data"`
+	Code  int    `json:"code"`
+	Type  int    `json:"type"`
+	Msg   string `json:"msg"`
 }
 
-type UserValidation struct {
+type User struct {
 	ID               string     `json:"id"`
 	TypeDocument     *string    `json:"type_document"`
 	DocumentNumber   string     `json:"document_number"`
-	ExpeditionDate   *time.Time `json:"expedition_date"`
 	Email            string     `json:"email"`
 	FirstName        string     `json:"first_name"`
 	SecondName       string     `json:"second_name"`
@@ -75,13 +62,13 @@ type UserValidation struct {
 	FrontDocumentImg string     `json:"front_document_img"`
 	Gender           *string    `json:"gender"`
 	Nationality      *string    `json:"nationality"`
-	CivilStatus      *string    `json:"civil_status"`
 	FirstSurname     *string    `json:"first_surname"`
 	BirthDate        *time.Time `json:"birth_date"`
 	Country          *string    `json:"country"`
 	TransactionId    string     `json:"transaction_id"`
 	Department       *string    `json:"department"`
 	City             *string    `json:"city"`
+	Role             string     `json:"role"`
 	CreatedAt        time.Time  `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 }

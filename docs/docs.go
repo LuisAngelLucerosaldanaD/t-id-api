@@ -24,7 +24,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/clients": {
+        "/api/v1/client": {
             "post": {
                 "description": "Método para crear el cliente en el sistema",
                 "consumes": [
@@ -52,7 +52,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/clients.Client"
+                            "$ref": "#/definitions/client.Client"
                         }
                     }
                 ],
@@ -60,13 +60,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/clients.ResAnny"
+                            "$ref": "#/definitions/client.ResAnny"
                         }
                     }
                 }
             }
         },
-        "/api/v1/clients/{nit}": {
+        "/api/v1/client/{nit}": {
             "get": {
                 "description": "Método para obtener la información del cliente de CheckID",
                 "consumes": [
@@ -100,7 +100,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/clients.ResClient"
+                            "$ref": "#/definitions/client.ResClient"
                         }
                     }
                 }
@@ -332,7 +332,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.requestValidateIdentity"
+                            "$ref": "#/definitions/user.requestValidateIdentity"
                         }
                     }
                 ],
@@ -340,7 +340,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.resCreateUser"
+                            "$ref": "#/definitions/user.resCreateUser"
                         }
                     }
                 }
@@ -374,7 +374,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.requestValidateIdentity"
+                            "$ref": "#/definitions/user.requestValidateIdentity"
                         }
                     }
                 ],
@@ -382,7 +382,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseAnny"
+                            "$ref": "#/definitions/user.responseAnny"
                         }
                     }
                 }
@@ -415,7 +415,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.resGetUsersDataPending"
+                            "$ref": "#/definitions/user.resGetUsersDataPending"
                         }
                     }
                 }
@@ -447,7 +447,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseFinishOnboarding"
+                            "$ref": "#/definitions/user.responseFinishOnboarding"
                         }
                     }
                 }
@@ -479,7 +479,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseFinishOnboarding"
+                            "$ref": "#/definitions/user.responseFinishOnboarding"
                         }
                     }
                 }
@@ -513,7 +513,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.reqUploadDocument"
+                            "$ref": "#/definitions/user.reqUploadDocument"
                         }
                     }
                 ],
@@ -521,7 +521,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseAnny"
+                            "$ref": "#/definitions/user.responseAnny"
                         }
                     }
                 }
@@ -555,7 +555,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.reqUploadSelfie"
+                            "$ref": "#/definitions/user.reqUploadSelfie"
                         }
                     }
                 ],
@@ -563,7 +563,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseAnny"
+                            "$ref": "#/definitions/user.responseAnny"
                         }
                     }
                 }
@@ -603,13 +603,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.resGetUserSession"
+                            "$ref": "#/definitions/user.resGetUserSession"
                         }
                     }
                 }
             }
         },
-        "/api/v1/user/users-lasted/{email}/{limit}/{offset}": {
+        "/api/v1/user/user-lasted/{email}/{limit}/{offset}": {
             "get": {
                 "description": "Método para el obtener los registros de los usuarios",
                 "consumes": [
@@ -657,7 +657,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.resGetUsersLasted"
+                            "$ref": "#/definitions/user.resGetUsersLasted"
                         }
                     }
                 }
@@ -697,7 +697,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseAnny"
+                            "$ref": "#/definitions/user.responseAnny"
                         }
                     }
                 }
@@ -731,7 +731,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/clients.ReqCreateWorkflow"
+                            "$ref": "#/definitions/client.ReqCreateWorkflow"
                         }
                     }
                 ],
@@ -739,7 +739,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/clients.ResAnny"
+                            "$ref": "#/definitions/client.ResAnny"
                         }
                     }
                 }
@@ -793,7 +793,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/clients.ResAnny"
+                            "$ref": "#/definitions/client.ResAnny"
                         }
                     }
                 }
@@ -929,7 +929,7 @@ const docTemplate = `{
                 }
             }
         },
-        "clients.Client": {
+        "client.Client": {
             "type": "object",
             "properties": {
                 "banner": {
@@ -961,7 +961,7 @@ const docTemplate = `{
                 }
             }
         },
-        "clients.ReqCreateWorkflow": {
+        "client.ReqCreateWorkflow": {
             "type": "object",
             "properties": {
                 "expired_at": {
@@ -981,7 +981,7 @@ const docTemplate = `{
                 }
             }
         },
-        "clients.ResAnny": {
+        "client.ResAnny": {
             "type": "object",
             "properties": {
                 "code": {
@@ -999,14 +999,14 @@ const docTemplate = `{
                 }
             }
         },
-        "clients.ResClient": {
+        "client.ResClient": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/clients.Client"
+                    "$ref": "#/definitions/client.Client"
                 },
                 "error": {
                     "type": "boolean"
@@ -1195,7 +1195,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.DataPending": {
+        "user.DataPending": {
             "type": "object",
             "properties": {
                 "basic_information": {
@@ -1209,7 +1209,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.UserStatus": {
+        "user.UserStatus": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1238,7 +1238,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.UserValidation": {
+        "user.UserValidation": {
             "type": "object",
             "properties": {
                 "age": {
@@ -1312,7 +1312,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.Users": {
+        "user.Users": {
             "type": "object",
             "properties": {
                 "age": {
@@ -1380,7 +1380,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.reqUploadDocument": {
+        "user.reqUploadDocument": {
             "type": "object",
             "properties": {
                 "document_back_img": {
@@ -1394,7 +1394,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.reqUploadSelfie": {
+        "user.reqUploadSelfie": {
             "type": "object",
             "properties": {
                 "selfie_img": {
@@ -1405,7 +1405,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.requestValidateIdentity": {
+        "user.requestValidateIdentity": {
             "type": "object",
             "properties": {
                 "age": {
@@ -1461,14 +1461,14 @@ const docTemplate = `{
                 }
             }
         },
-        "users.resCreateUser": {
+        "user.resCreateUser": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/users.Users"
+                    "$ref": "#/definitions/user.Users"
                 },
                 "error": {
                     "type": "boolean"
@@ -1481,14 +1481,14 @@ const docTemplate = `{
                 }
             }
         },
-        "users.resGetUserSession": {
+        "user.resGetUserSession": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/users.UserValidation"
+                    "$ref": "#/definitions/user.UserValidation"
                 },
                 "error": {
                     "type": "boolean"
@@ -1501,14 +1501,14 @@ const docTemplate = `{
                 }
             }
         },
-        "users.resGetUsersDataPending": {
+        "user.resGetUsersDataPending": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/users.DataPending"
+                    "$ref": "#/definitions/user.DataPending"
                 },
                 "error": {
                     "type": "boolean"
@@ -1521,7 +1521,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.resGetUsersLasted": {
+        "user.resGetUsersLasted": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1530,7 +1530,7 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/users.UserStatus"
+                        "$ref": "#/definitions/user.UserStatus"
                     }
                 },
                 "error": {
@@ -1544,7 +1544,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.responseAnny": {
+        "user.responseAnny": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1562,7 +1562,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.responseFinishOnboarding": {
+        "user.responseFinishOnboarding": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1763,7 +1763,7 @@ const docTemplate = `{
     ]
 }`
 
-// SwaggerInfo holds exported Swagger Info so clients can modify it
+// SwaggerInfo holds exported Swagger Info so client can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.4",
 	Host:             "172.147.77.149:50050",

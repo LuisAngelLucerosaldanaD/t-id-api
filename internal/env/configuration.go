@@ -17,7 +17,7 @@ type configuration struct {
 	DB          DB          `json:"db"`
 	Template    Template    `json:"template"`
 	SendGrid    SendGrid    `json:"send_grid"`
-	Files       Files       `json:"files"`
+	Files       Files       `json:"file"`
 	Aws         Aws         `json:"aws"`
 	Blockchain  Blockchain  `json:"blockchain"`
 	AuthService AuthService `json:"auth_service"`

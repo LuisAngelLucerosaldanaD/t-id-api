@@ -2,13 +2,12 @@ package users
 
 import (
 	"check-id-api/internal/logger"
+	"check-id-api/internal/middleware"
 	"check-id-api/internal/msg"
 	"check-id-api/pkg/auth"
-	"check-id-api/pkg/auth/users"
+	user2 "check-id-api/pkg/auth/user"
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
-	"check-id-api/pkg/wf"
-	"github.com/asaskevich/govalidator"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -36,7 +35,6 @@ func (h *handlerUser) uploadSelfie(c *fiber.Ctx) error {
 	req := reqUploadSelfie{}
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -45,7 +43,7 @@ func (h *handlerUser) uploadSelfie(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fileSelfie, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(1, req.UserID)
+	fileSelfie, code, err := srvCfg.SrvFiles.GetFileByTypeAndUserID(1, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't get user file, error validation user, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -64,7 +62,7 @@ func (h *handlerUser) uploadSelfie(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 1, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 1, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create selfie image, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -75,13 +73,6 @@ func (h *handlerUser) uploadSelfie(c *fiber.Ctx) error {
 	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Carga de Selfie", "info", "Carga de la imagen de Selfie", req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create traceability, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvWf.SrvStatusReq.CreateStatusRequest("pendiente", "Pendiente por carga de documento de identidad", req.UserID)
-	if err != nil {
-		logger.Error.Printf("couldn't create status request, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
@@ -107,7 +98,6 @@ func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
 	req := reqUploadDocument{}
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -116,7 +106,7 @@ func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	fileTemp, code, err := srvCfg.SrvFiles.GetFilesByTypeAndUserID(2, req.UserID)
+	fileTemp, code, err := srvCfg.SrvFiles.GetFileByTypeAndUserID(2, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't upload documents, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -135,7 +125,7 @@ func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 2, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 2, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create file document front, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -150,7 +140,7 @@ func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvCfg.SrvFiles.CreateFiles(f.Path, f.FileName, 3, req.UserID)
+	_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 3, req.UserID)
 	if err != nil {
 		logger.Error.Printf("couldn't create file document back, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -165,123 +155,64 @@ func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvWf.SrvStatusReq.CreateStatusRequest("pendiente", "Pendiente por carga de información básica", req.UserID)
-	if err != nil {
-		logger.Error.Printf("couldn't create status request, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
 	res.Data = "Documento cargado correctamente"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
 }
 
-// registerBasicInformation godoc
-// @Summary Registro de información básica
-// @Description Método para el registro de los datos básicos de una persona
-// @tags User
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param BasicInformation body requestValidateIdentity true "request of validate user identity"
-// @Success 200 {object} resCreateUser
-// @Router /api/v1/user/basic-information [post]
-func (h *handlerUser) registerBasicInformation(c *fiber.Ctx) error {
-	res := resCreateUser{Error: true}
-	req := requestValidateIdentity{}
-	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
-	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
-
-	err := c.BodyParser(&req)
-	if err != nil {
-		logger.Error.Printf("couldn't bind model create wallets: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	user, code, err := srvAuth.SrvUser.UpdateUsers(req.Id, &req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, &req.FirstName, &req.SecondName, &req.SecondSurname, &req.Age, &req.Gender, &req.Nationality, &req.CivilStatus, &req.FirstSurname, req.BirthDate, &req.Country, &req.Department, &req.City, c.IP(), "")
-	if err != nil {
-		logger.Error.Printf("couldn't create user, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info", "Registro de información básica", user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't create traceability, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvWf.SrvStatusReq.CreateStatusRequest("pendiente", "Pendiente por validación de identidad", user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't create status request, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvWf.SrvWork.CreateWorkValidation("pending", user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't start work, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		res.Msg = err.Error()
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	res.Data = user
-	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-	res.Error = false
-	return c.Status(http.StatusOK).JSON(res)
-}
-
 // createUser godoc
-// @Summary Creación de un usuario
-// @Description Método para crear el usuario
+// @Summary Metodo que permite la creación de un usuario
+// @Description Metodo que permite la creación de un usuario
 // @tags User
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param BasicInformation body requestValidateIdentity true "request of validate user identity"
+// @Param BasicInformation body RequestCreateUser true "request of validate user identity"
 // @Success 200 {object} responseAnny
 // @Router /api/v1/user/create [post]
 func (h *handlerUser) createUser(c *fiber.Ctx) error {
 	res := responseAnny{Error: true}
-	req := requestValidateIdentity{}
+	req := RequestCreateUser{}
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
 
 	err := c.BodyParser(&req)
 	if err != nil {
-		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		logger.Error.Printf("couldn't bind model create user: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.CreateUsers(uuid.New().String(), &req.TypeDocument, req.DocumentNumber, req.ExpeditionDate, req.Email, &req.FirstName, &req.SecondName, &req.SecondSurname, &req.Age, &req.Gender, &req.Nationality, &req.CivilStatus, &req.FirstSurname, req.BirthDate, &req.Country, &req.Department, &req.City, c.IP(), "")
+	user, code, err := srvAuth.SrvUser.CreateUser(&user2.User{
+		ID:             uuid.New().String(),
+		Nickname:       req.Email,
+		Email:          req.Email,
+		Password:       req.Password,
+		DocumentNumber: req.DocumentNumber,
+		Cellphone:      req.Cellphone,
+		RealIp:         c.IP(),
+		StatusId:       0,
+		FailedAttempts: 0,
+		IsDeleted:      false,
+	})
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info", "Registro de información básica", user.ID)
+	_, code, err = srvAuth.SrvUserRole.CreateUseRole(uuid.New().String(), user.ID, "14cbf8d2-485a-4fbe-baa6-16273c765f14")
 	if err != nil {
-		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		logger.Error.Printf("couldn't create user role, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	_, code, err = srvWf.SrvWork.CreateWorkValidation("pendiente", user.ID)
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info",
+		"Creación de la cuenta en la plataforma", user.ID)
 	if err != nil {
-		_, _ = srvAuth.SrvUser.DeleteUsers(user.ID)
-		_, _ = srvTrx.SrvTraceability.DeleteTraceabilityByUserID(user.ID)
-		logger.Error.Printf("couldn't start work, error: %v", err)
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		res.Msg = err.Error()
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -298,15 +229,14 @@ func (h *handlerUser) createUser(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param identifier path string true "Identificador para la búsqueda del usuario"
 // @Success 200 {object} resGetUserSession
-// @Router /api/v1/user/user-session/{identifier} [get]
+// @Router /api/v1/user/user-session [get]
 func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 	res := resGetUserSession{}
-	identifier := c.Params("identifier")
-	var user *users.Users
-	if identifier == "" {
-		logger.Error.Printf("el identifier es requerido")
+	userToken, err := middleware.GetUser(c)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
+		// TODO pendiente de agregar mensaje
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
@@ -314,40 +244,47 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
-	if !govalidator.IsUUID(identifier) && !govalidator.IsEmail(identifier) {
-		logger.Error.Printf("el identifier no es un parámetro valido de búsqueda")
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+	userTmp, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario por su numero de identificacion, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if govalidator.IsUUID(identifier) {
-		userTmp, code, err := srvAuth.SrvUser.GetUsersByID(identifier)
+	if userTmp == nil {
+		userTmp, code, err = srvAuth.SrvUser.GetUserByEmail(userToken.Email)
 		if err != nil {
-			logger.Error.Printf("No se pudo obtener el usuario, error: %s", err.Error())
+			logger.Error.Printf("No se pudo obtener el usuario por su email, error: %s", err.Error())
 			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
-		user = userTmp
-	} else {
-		userTmp, code, err := srvAuth.SrvUser.GetUsersByEmail(identifier)
-		if err != nil {
-			logger.Error.Printf("No se pudo obtener el usuario, error: %s", err.Error())
-			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-			return c.Status(http.StatusAccepted).JSON(res)
-		}
-		user = userTmp
 	}
 
-	if user == nil {
+	if userTmp == nil {
 		res.Error = false
 		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	userValidation, code, err := srvAuth.SrvValidationUsers.GetValidationUsersByUserID(user.ID)
+	user := userTmp
+
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener la validación del usuario, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	role, code, err := srvAuth.SrvRole.GetRoleByUserID(user.ID)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el rol del usuario, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if role == nil {
+		logger.Error.Printf("El usuario no tiene un rol asigando")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -356,8 +293,8 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 	frontDocument := ""
 	backDocument := ""
 
-	if userValidation != nil {
-		transactionID = userValidation.TransactionId
+	if onboarding != nil {
+		transactionID = onboarding.TransactionId
 	}
 
 	files, code, err := srvCfg.SrvFiles.GetFilesByUserID(user.ID)
@@ -369,33 +306,25 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 
 	if files != nil {
 		for _, file := range files {
-			/*fileS3, code, err := srvCfg.SrvFilesS3.GetFileByPath(file.Path, file.Name)
-			if err != nil {
-				logger.Error.Printf("No se pudo descargar el archivo, error: %s", err.Error())
-				res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-				return c.Status(http.StatusAccepted).JSON(res)
-			}*/
-
+			fileID := strconv.FormatInt(file.ID, 10)
 			switch file.Type {
 			case 1:
-				// selfieImg = fileS3.Encoding
-				selfieImg = strconv.FormatInt(file.ID, 10)
+				selfieImg = fileID
 				break
 			case 2:
-				frontDocument = strconv.FormatInt(file.ID, 10)
+				frontDocument = fileID
 				break
 			default:
-				backDocument = strconv.FormatInt(file.ID, 10)
+				backDocument = fileID
 				break
 			}
 		}
 	}
 
-	res.Data = &UserValidation{
+	res.Data = &User{
 		ID:               user.ID,
 		TypeDocument:     user.TypeDocument,
 		DocumentNumber:   user.DocumentNumber,
-		ExpeditionDate:   user.ExpeditionDate,
 		Email:            user.Email,
 		FirstName:        *user.FirstName,
 		SecondName:       *user.SecondName,
@@ -403,7 +332,6 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 		Age:              user.Age,
 		Gender:           user.Gender,
 		Nationality:      user.Nationality,
-		CivilStatus:      user.CivilStatus,
 		FirstSurname:     user.FirstSurname,
 		BirthDate:        user.BirthDate,
 		Country:          user.Country,
@@ -414,124 +342,8 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 		BackDocumentImg:  backDocument,
 		FrontDocumentImg: frontDocument,
 		CreatedAt:        user.CreatedAt,
+		Role:             role.Name,
 		UpdatedAt:        user.UpdatedAt,
-	}
-	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-	res.Error = false
-	return c.Status(http.StatusOK).JSON(res)
-}
-
-// getLastedUsers godoc
-// @Summary Obtiene los registros de usuarios
-// @Description Método para el obtener los registros de los usuarios
-// @tags User
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param email path string true "Correo electrónico del usuario"
-// @Param limit path string true "Cantidad de registros por consulta"
-// @Param offset path string true "Inicio del conteo de los registros por consulta"
-// @Success 200 {object} resGetUsersLasted
-// @Router /api/v1/user/users-lasted/{email}/{limit}/{offset} [get]
-func (h *handlerUser) getLastedUsers(c *fiber.Ctx) error {
-	res := resGetUsersLasted{}
-	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
-	srvWf := wf.NewServerWf(h.DB, nil, h.TxID)
-	var limit, offset int
-
-	email := c.Params("email")
-	if email == "" {
-		logger.Error.Printf("el email del usuario es requerido")
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	limitStr := c.Params("limit")
-	if limitStr == "" {
-		limit = 10
-	} else {
-		limit, _ = strconv.Atoi(limitStr)
-	}
-
-	offsetStr := c.Params("offset")
-	if offsetStr == "" {
-		offset = 0
-	} else {
-		offset, _ = strconv.Atoi(offsetStr)
-	}
-
-	usersLasted, err := srvAuth.SrvUser.GetAllUsersLasted(email, limit, offset)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el listado de los últimos usuarios, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	for _, user := range usersLasted {
-		validation, _, err := srvWf.SrvStatusReq.GetStatusRequestByUserID(user.ID)
-		if err != nil {
-			logger.Error.Printf("No se pudo obtener el estado del usuario, error: %s", err.Error())
-			continue
-		}
-
-		if validation == nil {
-			continue
-		}
-		res.Data = append(res.Data, &UserStatus{
-			ID:            user.ID,
-			Email:         user.Email,
-			FirstName:     *user.FirstName,
-			SecondName:    *user.SecondName,
-			SecondSurname: *user.SecondSurname,
-			FirstSurname:  *user.FirstSurname,
-			Status:        validation.Status,
-			UpdatedAt:     user.UpdatedAt,
-		})
-	}
-
-	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-	res.Error = false
-	return c.Status(http.StatusOK).JSON(res)
-}
-
-// getUsersDataPending godoc
-// @Summary Obtiene la cantidad de usuarios que no cargaron información requerida
-// @Description Método para el obtener la cantidad de usuarios que no han cargado la información básica como la selfie, el documento de identidad y la información básica
-// @tags User
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Success 200 {object} resGetUsersDataPending
-// @Router /api/v1/user/data-pending [get]
-func (h *handlerUser) getUsersDataPending(c *fiber.Ctx) error {
-	res := resGetUsersDataPending{}
-	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
-
-	selfieData, err := srvAuth.SrvUser.GetAllNotUploadFile(1)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el listado de usuarios que no cargaron la selfie, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	documentsData, err := srvAuth.SrvUser.GetAllNotUploadFile(2)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el listado de usuarios que no cargaron el documento, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	basicInformation, err := srvAuth.SrvUser.GetAllNotStarted()
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener el listado de usuarios que no cargaron la información básica, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	res.Data = DataPending{
-		Selfie:           len(selfieData),
-		Document:         len(documentsData),
-		BasicInformation: len(basicInformation),
 	}
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
@@ -545,21 +357,21 @@ func (h *handlerUser) getUsersDataPending(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param identity_number path string true "Número de identificación del usuario"
 // @Success 200 {object} responseAnny
-// @Router /api/v1/user/validate/{identity_number} [get]
+// @Router /api/v1/user/validate [get]
 func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 	res := responseAnny{Error: true}
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 
-	documentNumber, err := strconv.ParseInt(c.Params("identity_number"), 10, 64)
+	userToken, err := middleware.GetUser(c)
 	if err != nil {
-		logger.Error.Printf("el numero de identificacion es incorrecto, error: %s", err.Error())
+		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
+		// TODO pendiente de agregar mensaje
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUsersByIdentityNumber(documentNumber)
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -571,18 +383,25 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	validation, code, err := srvAuth.SrvValidationUsers.GetValidationUsersByUserID(user.ID)
+	if user == nil {
+		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo consultar la validacion de identidad, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = true
-	if validation == nil {
-		res.Data = false
+	if onboarding == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	res.Data = onboarding.TransactionId != ""
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
@@ -594,21 +413,35 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 // @tags User
 // @Accept json
 // @Produce json
-// @Param id path string true "Id del usuario"
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Success 200 {object} responseFinishOnboarding
 // @Router /api/v1/user/finish-onboarding [get]
 func (h *handlerUser) getFinishOnboarding(c *fiber.Ctx) error {
 	res := responseFinishOnboarding{Error: true}
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 
-	userId := c.Params("id")
-	if userId == "" {
-		logger.Error.Printf("El id del usuario es requerido")
+	userToken, err := middleware.GetUser(c)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
+		// TODO pendiente de agregar mensaje
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(userId)
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el registro de enrolamiento del usuario: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -633,34 +466,48 @@ func (h *handlerUser) getFinishOnboarding(c *fiber.Ctx) error {
 // @tags User
 // @Accept json
 // @Produce json
-// @Param id path string true "Id del usuario"
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Success 200 {object} responseFinishOnboarding
 // @Router /api/v1/user/finish-validation [get]
 func (h *handlerUser) getFinishValidationIdentity(c *fiber.Ctx) error {
 	res := responseFinishOnboarding{Error: true}
-	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 
-	userId := c.Params("id")
-	if userId == "" {
-		logger.Error.Printf("El id del usuario es requerido")
+	userToken, err := middleware.GetUser(c)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
+		// TODO pendiente de agregar mensaje
 		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	validation, code, err := srvCfg.SrvValidationRequest.GetValidationRequestByUserID(userId)
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	lifeTest, code, err := srvAuth.SrvLifeTest.GetLifeTestByUserID(user.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el registro de validación de identidad del usuario: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if validation == nil {
+	if lifeTest == nil {
 		logger.Error.Printf("No se pudo obtener el registro de validación de identidad del usuario")
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = validation.Status == "finished"
+	res.Data = lifeTest.Status == "finished"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
@@ -672,12 +519,14 @@ func (h *handlerUser) getFinishValidationIdentity(c *fiber.Ctx) error {
 // @tags User
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param id path string true "Id del archivo"
 // @Success 200 {object} ResponseGetUserFile
 // @Router /api/v1/user/file [get]
 func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 	res := ResponseGetUserFile{Error: true}
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 
 	fileID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
@@ -686,7 +535,28 @@ func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	file, code, err := srvCfg.SrvFiles.GetFilesByID(fileID)
+	userToken, err := middleware.GetUser(c)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
+		// TODO pendiente de agregar mensaje
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	file, code, err := srvCfg.SrvFiles.GetFileByID(fileID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener la validación del usuario, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -695,6 +565,12 @@ func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 
 	if file == nil {
 		logger.Error.Printf("No se pudo obtener el archivo del usuario solicitado")
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if file.UserId != user.ID {
+		logger.Error.Printf("No esta autorizado para ver este recurso")
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}

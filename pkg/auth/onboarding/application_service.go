@@ -9,8 +9,8 @@ import (
 )
 
 type PortsServerOnboarding interface {
-	CreateOnboarding(id string, clientId int64, requestId string, userId string, status string) (*Onboarding, int, error)
-	UpdateOnboarding(id string, clientId int64, requestId string, userId string, status string) (*Onboarding, int, error)
+	CreateOnboarding(id string, clientId int64, requestId string, userId string, status string, transactionId string) (*Onboarding, int, error)
+	UpdateOnboarding(id string, clientId int64, requestId string, userId string, status string, transactionId string) (*Onboarding, int, error)
 	DeleteOnboarding(id string) (int, error)
 	GetOnboardingByID(id string) (*Onboarding, int, error)
 	GetAllOnboarding() ([]*Onboarding, error)
@@ -28,8 +28,8 @@ func NewOnboardingService(repository ServicesOnboardingRepository, user *models.
 	return &service{repository: repository, user: user, txID: TxID}
 }
 
-func (s *service) CreateOnboarding(id string, clientId int64, requestId string, userId string, status string) (*Onboarding, int, error) {
-	m := NewOnboarding(id, clientId, requestId, userId, status)
+func (s *service) CreateOnboarding(id string, clientId int64, requestId string, userId string, status string, transactionId string) (*Onboarding, int, error) {
+	m := NewOnboarding(id, clientId, requestId, userId, status, transactionId)
 	if valid, err := m.valid(); !valid {
 		logger.Error.Println(s.txID, " - don't meet validations:", err)
 		return m, 15, err
@@ -45,8 +45,8 @@ func (s *service) CreateOnboarding(id string, clientId int64, requestId string, 
 	return m, 29, nil
 }
 
-func (s *service) UpdateOnboarding(id string, clientId int64, requestId string, userId string, status string) (*Onboarding, int, error) {
-	m := NewOnboarding(id, clientId, requestId, userId, status)
+func (s *service) UpdateOnboarding(id string, clientId int64, requestId string, userId string, status string, transactionId string) (*Onboarding, int, error) {
+	m := NewOnboarding(id, clientId, requestId, userId, status, transactionId)
 	if valid, err := m.valid(); !valid {
 		logger.Error.Println(s.txID, " - don't meet validations:", err)
 		return m, 15, err
