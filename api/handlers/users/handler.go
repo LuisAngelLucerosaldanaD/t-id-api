@@ -236,8 +236,7 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 	userToken, err := middleware.GetUser(c)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
-		// TODO pendiente de agregar mensaje
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -366,8 +365,7 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 	userToken, err := middleware.GetUser(c)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
-		// TODO pendiente de agregar mensaje
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -423,8 +421,7 @@ func (h *handlerUser) getFinishOnboarding(c *fiber.Ctx) error {
 	userToken, err := middleware.GetUser(c)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
-		// TODO pendiente de agregar mensaje
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -476,8 +473,7 @@ func (h *handlerUser) getFinishValidationIdentity(c *fiber.Ctx) error {
 	userToken, err := middleware.GetUser(c)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
-		// TODO pendiente de agregar mensaje
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
@@ -538,8 +534,7 @@ func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 	userToken, err := middleware.GetUser(c)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
-		// TODO pendiente de agregar mensaje
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 

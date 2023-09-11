@@ -39,7 +39,6 @@ func setConnection() {
 
 }
 
-// TODO encrypt-decrypt password
 func connectionString() string {
 	var host, database, username, password, instance string
 	var port int

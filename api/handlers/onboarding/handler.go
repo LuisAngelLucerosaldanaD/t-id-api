@@ -226,8 +226,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	}
 
 	if !resp {
-
-		// TODO pendiente por enviar a validación manual si esta rechazado por la IA
 		_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de identidad", "error", "La validación de identidad fue rechazada", req.UserID)
 		if err != nil {
 			logger.Error.Printf("couldn't create traceability, error: %v", err)

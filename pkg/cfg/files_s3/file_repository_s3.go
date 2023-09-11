@@ -48,7 +48,6 @@ func (s *s3) upload(id string, file *File) (*File, error) {
 	fullPath.WriteString(file.FileName)
 	file.Hash = s.getHashFromFile(fl)
 	file.FileSize = int(r.Size())
-	//TODO getNumberPage
 	file.NumberPage = 1
 	file.Bucket = c.Files.S3.Bucket
 	err = files_s3.UploadFile(r, fullPath.String(), file.Bucket)
