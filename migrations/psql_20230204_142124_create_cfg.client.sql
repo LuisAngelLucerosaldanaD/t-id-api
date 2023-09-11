@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS cfg.client
 (
     id           BIGSERIAL    NOT NULL PRIMARY KEY,
     full_name    VARCHAR(150) NOT NULL,
-    nit          VARCHAR(50)  NOT NULL,
+    nit          VARCHAR(50)  NOT NULL unique,
     banner       VARCHAR(50)  NOT NULL,
     logo_small   VARCHAR(50)  NOT NULL,
     main_color   VARCHAR(50)  NOT NULL,

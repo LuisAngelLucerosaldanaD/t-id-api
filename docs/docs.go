@@ -52,7 +52,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/client.Client"
+                            "$ref": "#/definitions/clients.Client"
                         }
                     }
                 ],
@@ -60,7 +60,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client.ResAnny"
+                            "$ref": "#/definitions/clients.ResAnny"
                         }
                     }
                 }
@@ -100,7 +100,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client.ResClient"
+                            "$ref": "#/definitions/clients.ResClient"
                         }
                     }
                 }
@@ -190,7 +190,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/onboarding/validate-identity": {
+        "/api/v1/onboarding/validate_identity": {
             "post": {
                 "description": "Método que permite finalizar la validación de identidad de un usuario por la aplicación de OnlyOne",
                 "consumes": [
@@ -232,9 +232,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/traceability/user-session/{userID}": {
+        "/api/v1/traceability": {
             "get": {
-                "description": "Método para obtener la trazabilidad registrada para el proceso de verificación de identidad",
+                "description": "Método para obtención de los datos de trazabilidad de un usuario por su id",
                 "consumes": [
                     "application/json"
                 ],
@@ -244,7 +244,7 @@ const docTemplate = `{
                 "tags": [
                     "Traceability"
                 ],
-                "summary": "Obtención de los datos de trazabilidad",
+                "summary": "Obtención de los datos de trazabilidad de un usuario por su id",
                 "parameters": [
                     {
                         "type": "string",
@@ -272,9 +272,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/traceability/validation-identity/{id}": {
-            "get": {
-                "description": "Método que obtiene el historial de validaciones de identidad de un usuario por su id",
+        "/api/v1/user/create": {
+            "post": {
+                "description": "Metodo que permite la creación de un usuario",
                 "consumes": [
                     "application/json"
                 ],
@@ -282,13 +282,55 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Traceability"
+                    "User"
                 ],
-                "summary": "Obtiene el historial de validaciones de identidad de un usuario",
+                "summary": "Metodo que permite la creación de un usuario",
+                "parameters": [
+                    {
+                        "description": "request of validate user identity",
+                        "name": "BasicInformation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.RequestCreateUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.responseAnny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/file": {
+            "get": {
+                "description": "Método que permite validar si ha terminado la validación de identidad de un usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Permite validar si ha terminado la validación de identidad de un usuario",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID del usuario",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Id del archivo",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -298,124 +340,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/traceability.ResTrackingValidation"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/user/basic-information": {
-            "post": {
-                "description": "Método para el registro de los datos básicos de una persona",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Registro de información básica",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "request of validate user identity",
-                        "name": "BasicInformation",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.requestValidateIdentity"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.resCreateUser"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/user/create": {
-            "post": {
-                "description": "Método para crear el usuario",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Creación de un usuario",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "request of validate user identity",
-                        "name": "BasicInformation",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.requestValidateIdentity"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.responseAnny"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/user/data-pending": {
-            "get": {
-                "description": "Método para el obtener la cantidad de usuarios que no han cargado la información básica como la selfie, el documento de identidad y la información básica",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Obtiene la cantidad de usuarios que no cargaron información requerida",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.resGetUsersDataPending"
+                            "$ref": "#/definitions/users.ResponseGetUserFile"
                         }
                     }
                 }
@@ -437,9 +362,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Id del usuario",
-                        "name": "id",
-                        "in": "path",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -447,7 +373,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.responseFinishOnboarding"
+                            "$ref": "#/definitions/users.responseFinishOnboarding"
                         }
                     }
                 }
@@ -469,9 +395,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Id del usuario",
-                        "name": "id",
-                        "in": "path",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -479,7 +406,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.responseFinishOnboarding"
+                            "$ref": "#/definitions/users.responseFinishOnboarding"
                         }
                     }
                 }
@@ -513,7 +440,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.reqUploadDocument"
+                            "$ref": "#/definitions/users.reqUploadDocument"
                         }
                     }
                 ],
@@ -521,7 +448,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.responseAnny"
+                            "$ref": "#/definitions/users.responseAnny"
                         }
                     }
                 }
@@ -555,7 +482,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.reqUploadSelfie"
+                            "$ref": "#/definitions/users.reqUploadSelfie"
                         }
                     }
                 ],
@@ -563,13 +490,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.responseAnny"
+                            "$ref": "#/definitions/users.responseAnny"
                         }
                     }
                 }
             }
         },
-        "/api/v1/user/user-session/{identifier}": {
+        "/api/v1/user/user-session": {
             "get": {
                 "description": "Método para el obtener la información del usuario en sesión por su email o id",
                 "consumes": [
@@ -590,80 +517,19 @@ const docTemplate = `{
                         "name": "Authorization",
                         "in": "header",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Identificador para la búsqueda del usuario",
-                        "name": "identifier",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.resGetUserSession"
+                            "$ref": "#/definitions/users.resGetUserSession"
                         }
                     }
                 }
             }
         },
-        "/api/v1/user/user-lasted/{email}/{limit}/{offset}": {
-            "get": {
-                "description": "Método para el obtener los registros de los usuarios",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Obtiene los registros de usuarios",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Correo electrónico del usuario",
-                        "name": "email",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Cantidad de registros por consulta",
-                        "name": "limit",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Inicio del conteo de los registros por consulta",
-                        "name": "offset",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.resGetUsersLasted"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/user/validate/{identity_number}": {
+        "/api/v1/user/validate": {
             "get": {
                 "description": "Método para verificar si el usuario ha validado su identidad",
                 "consumes": [
@@ -684,233 +550,13 @@ const docTemplate = `{
                         "name": "Authorization",
                         "in": "header",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Número de identificación del usuario",
-                        "name": "identity_number",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.responseAnny"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/validation-workflow": {
-            "post": {
-                "description": "Método para crear el flujo de validación de identidad",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Client"
-                ],
-                "summary": "Crea el flujo de validación de identidad",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Datos para creación del flujo",
-                        "name": "ReqCreateWorkflow",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/client.ReqCreateWorkflow"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/client.ResAnny"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/validation-workflow/{nit}/{request_id}/{document_number}": {
-            "get": {
-                "description": "Método para obtener el flujo de validación de identidad de un usuario",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Client"
-                ],
-                "summary": "Obtiene el flujo de validación de un usuario",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "NIT del cliente",
-                        "name": "nit",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Número de solicitud",
-                        "name": "request_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Número de identificación del usuario",
-                        "name": "document_number",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/client.ResAnny"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/work/accept": {
-            "post": {
-                "description": "Método para aceptar la data registrada de un usuario por parte del administrador",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Work"
-                ],
-                "summary": "Acepta la información registrada",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Datos de solicitud para la aceptación",
-                        "name": "ReqAccept",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/work.ReqAccept"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/work.resAnny"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/work/all": {
-            "get": {
-                "description": "Método para obtener la totalidad del trabajo registrado por lo usuarios",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Work"
-                ],
-                "summary": "Trae la totalidad del trabajo existente",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/work.resAllWork"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/work/refused": {
-            "post": {
-                "description": "Método para rechazar la data registrada de un usuario por parte del administrador",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Work"
-                ],
-                "summary": "Rechaza la información registrada",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Datos de solicitud para el rechazo",
-                        "name": "ReqRefused",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/work.ReqRefused"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/work.resAnny"
+                            "$ref": "#/definitions/users.responseAnny"
                         }
                     }
                 }
@@ -929,7 +575,7 @@ const docTemplate = `{
                 }
             }
         },
-        "client.Client": {
+        "clients.Client": {
             "type": "object",
             "properties": {
                 "banner": {
@@ -961,27 +607,7 @@ const docTemplate = `{
                 }
             }
         },
-        "client.ReqCreateWorkflow": {
-            "type": "object",
-            "properties": {
-                "expired_at": {
-                    "type": "string"
-                },
-                "max_num_validation": {
-                    "type": "integer"
-                },
-                "nit": {
-                    "type": "string"
-                },
-                "request_id": {
-                    "type": "string"
-                },
-                "user_identification": {
-                    "type": "string"
-                }
-            }
-        },
-        "client.ResAnny": {
+        "clients.ResAnny": {
             "type": "object",
             "properties": {
                 "code": {
@@ -999,14 +625,14 @@ const docTemplate = `{
                 }
             }
         },
-        "client.ResClient": {
+        "clients.ResClient": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/client.Client"
+                    "$ref": "#/definitions/clients.Client"
                 },
                 "error": {
                     "type": "boolean"
@@ -1042,7 +668,7 @@ const docTemplate = `{
         "onboarding.RequestValidationIdentity": {
             "type": "object",
             "properties": {
-                "face_image": {
+                "selfie": {
                     "type": "string"
                 },
                 "user_id": {
@@ -1091,29 +717,6 @@ const docTemplate = `{
                 }
             }
         },
-        "traceability.ResTrackingValidation": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/traceability.Tracking"
-                    }
-                },
-                "error": {
-                    "type": "boolean"
-                },
-                "msg": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
         "traceability.Traceability": {
             "type": "object",
             "properties": {
@@ -1130,38 +733,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "type": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "traceability.Tracking": {
-            "type": "object",
-            "properties": {
-                "client_id": {
-                    "type": "integer"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "expired_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "max_num_validation": {
-                    "type": "integer"
-                },
-                "request_id": {
-                    "type": "string"
-                },
-                "status": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -1195,50 +766,47 @@ const docTemplate = `{
                 }
             }
         },
-        "user.DataPending": {
+        "users.RequestCreateUser": {
             "type": "object",
             "properties": {
-                "basic_information": {
-                    "type": "integer"
+                "cellphone": {
+                    "type": "string"
                 },
-                "document": {
-                    "type": "integer"
+                "document_number": {
+                    "type": "string"
                 },
-                "selfie": {
-                    "type": "integer"
-                }
-            }
-        },
-        "user.UserStatus": {
-            "type": "object",
-            "properties": {
                 "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "first_surname": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "second_name": {
-                    "type": "string"
-                },
-                "second_surname": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "updated_at": {
+                "password": {
                     "type": "string"
                 }
             }
         },
-        "user.UserValidation": {
+        "users.ResponseGetUserFile": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.User": {
             "type": "object",
             "properties": {
                 "age": {
@@ -1251,9 +819,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "city": {
-                    "type": "string"
-                },
-                "civil_status": {
                     "type": "string"
                 },
                 "country": {
@@ -1269,9 +834,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "email": {
-                    "type": "string"
-                },
-                "expedition_date": {
                     "type": "string"
                 },
                 "first_name": {
@@ -1290,6 +852,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "nationality": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 },
                 "second_name": {
@@ -1312,75 +877,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user.Users": {
-            "type": "object",
-            "properties": {
-                "age": {
-                    "type": "integer"
-                },
-                "birth_date": {
-                    "type": "string"
-                },
-                "cellphone": {
-                    "type": "string"
-                },
-                "city": {
-                    "type": "string"
-                },
-                "civil_status": {
-                    "type": "string"
-                },
-                "country": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "department": {
-                    "type": "string"
-                },
-                "document_number": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "expedition_date": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "first_surname": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "nationality": {
-                    "type": "string"
-                },
-                "real_ip": {
-                    "type": "string"
-                },
-                "second_name": {
-                    "type": "string"
-                },
-                "second_surname": {
-                    "type": "string"
-                },
-                "type_document": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.reqUploadDocument": {
+        "users.reqUploadDocument": {
             "type": "object",
             "properties": {
                 "document_back_img": {
@@ -1394,7 +891,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user.reqUploadSelfie": {
+        "users.reqUploadSelfie": {
             "type": "object",
             "properties": {
                 "selfie_img": {
@@ -1405,70 +902,14 @@ const docTemplate = `{
                 }
             }
         },
-        "user.requestValidateIdentity": {
-            "type": "object",
-            "properties": {
-                "age": {
-                    "type": "integer"
-                },
-                "birth_date": {
-                    "type": "string"
-                },
-                "city": {
-                    "type": "string"
-                },
-                "civil_status": {
-                    "type": "string"
-                },
-                "country": {
-                    "type": "string"
-                },
-                "department": {
-                    "type": "string"
-                },
-                "document_number": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "expedition_date": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "first_surname": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "nationality": {
-                    "type": "string"
-                },
-                "second_name": {
-                    "type": "string"
-                },
-                "second_surname": {
-                    "type": "string"
-                },
-                "type_document": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.resCreateUser": {
+        "users.resGetUserSession": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/user.Users"
+                    "$ref": "#/definitions/users.User"
                 },
                 "error": {
                     "type": "boolean"
@@ -1481,70 +922,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user.resGetUserSession": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/user.UserValidation"
-                },
-                "error": {
-                    "type": "boolean"
-                },
-                "msg": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "user.resGetUsersDataPending": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/user.DataPending"
-                },
-                "error": {
-                    "type": "boolean"
-                },
-                "msg": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "user.resGetUsersLasted": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/user.UserStatus"
-                    }
-                },
-                "error": {
-                    "type": "boolean"
-                },
-                "msg": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "user.responseAnny": {
+        "users.responseAnny": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1562,7 +940,7 @@ const docTemplate = `{
                 }
             }
         },
-        "user.responseFinishOnboarding": {
+        "users.responseFinishOnboarding": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1570,162 +948,6 @@ const docTemplate = `{
                 },
                 "data": {
                     "type": "boolean"
-                },
-                "error": {
-                    "type": "boolean"
-                },
-                "msg": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "work.ReqAccept": {
-            "type": "object",
-            "properties": {
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "work.ReqRefused": {
-            "type": "object",
-            "properties": {
-                "motivo": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "work.User": {
-            "type": "object",
-            "properties": {
-                "age": {
-                    "type": "integer"
-                },
-                "birth_date": {
-                    "type": "string"
-                },
-                "cellphone": {
-                    "type": "string"
-                },
-                "city": {
-                    "type": "string"
-                },
-                "civil_status": {
-                    "type": "string"
-                },
-                "country": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "department": {
-                    "type": "string"
-                },
-                "document_number": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "expedition_date": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "first_surname": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "nationality": {
-                    "type": "string"
-                },
-                "real_ip": {
-                    "type": "string"
-                },
-                "second_name": {
-                    "type": "string"
-                },
-                "second_surname": {
-                    "type": "string"
-                },
-                "type_document": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "work.Work": {
-            "type": "object",
-            "properties": {
-                "client_id": {
-                    "type": "integer"
-                },
-                "create_at": {
-                    "type": "string"
-                },
-                "expired_at": {
-                    "type": "string"
-                },
-                "process": {
-                    "type": "string"
-                },
-                "request_id": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/work.User"
-                }
-            }
-        },
-        "work.resAllWork": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/work.Work"
-                    }
-                },
-                "error": {
-                    "type": "boolean"
-                },
-                "msg": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "work.resAnny": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "string"
                 },
                 "error": {
                     "type": "boolean"
@@ -1749,10 +971,6 @@ const docTemplate = `{
             "name": "Traceability"
         },
         {
-            "description": "Métodos referentes al trabajo registrado",
-            "name": "Work"
-        },
-        {
             "description": "Métodos referentes al cliente",
             "name": "Client"
         },
@@ -1763,7 +981,7 @@ const docTemplate = `{
     ]
 }`
 
-// SwaggerInfo holds exported Swagger Info so client can modify it
+// SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.4",
 	Host:             "172.147.77.149:50050",
@@ -1773,6 +991,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Api para OnBoarding y validación de identidad",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

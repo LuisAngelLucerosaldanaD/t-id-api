@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS auth.life_test
     created_at   TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at   TIMESTAMP    NOT NULL DEFAULT now(),
     constraint FK_user_life_test foreign key (user_id) references auth.user (id),
-    constraint FK_client_life_test foreign key (client_id) references auth.client (id)
+    constraint FK_client_life_test foreign key (client_id) references cfg.client (id)
 );
 
 -- +migrate Down

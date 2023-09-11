@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS auth.onboarding
     created_at     TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at     TIMESTAMP    NOT NULL DEFAULT now(),
     constraint FK_user_onboarding foreign key (user_id) references auth.user (id),
-    constraint FK_client_onboarding foreign key (client_id) references auth.client (id)
+    constraint FK_client_onboarding foreign key (client_id) references cfg.client (id)
 );
 
 -- +migrate Down
