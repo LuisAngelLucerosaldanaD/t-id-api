@@ -1,7 +1,6 @@
 package users
 
 import (
-	"check-id-api/pkg/auth/user"
 	"time"
 )
 
@@ -13,12 +12,22 @@ type responseAnny struct {
 	Msg   string      `json:"msg"`
 }
 
-type resCreateUser struct {
-	Error bool       `json:"error"`
-	Data  *user.User `json:"data"`
-	Code  int        `json:"code"`
-	Type  int        `json:"type"`
-	Msg   string     `json:"msg"`
+type requestLogin struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type ResponseLogin struct {
+	Error bool   `json:"error"`
+	Data  Token  `json:"data"`
+	Code  int    `json:"code"`
+	Type  int    `json:"type"`
+	Msg   string `json:"msg"`
+}
+
+type Token struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type reqUploadSelfie struct {

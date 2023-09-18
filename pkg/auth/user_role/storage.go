@@ -18,6 +18,7 @@ type ServicesUseRoleRepository interface {
 	getByID(id string) (*UseRole, error)
 	getAll() ([]*UseRole, error)
 	updateRoleByUserid(m *UseRole) error
+	getByUseID(id string) (*UseRole, error)
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesUseRoleRepository {

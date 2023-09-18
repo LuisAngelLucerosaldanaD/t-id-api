@@ -1,9 +1,12 @@
 package users
 
 import (
+	"check-id-api/internal/jwt"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/middleware"
+	"check-id-api/internal/models"
 	"check-id-api/internal/msg"
+	"check-id-api/internal/password"
 	"check-id-api/pkg/auth"
 	user2 "check-id-api/pkg/auth/user"
 	"check-id-api/pkg/cfg"
@@ -18,6 +21,84 @@ import (
 type handlerUser struct {
 	DB   *sqlx.DB
 	TxID string
+}
+
+// Login godoc
+// @Summary Método que permite autenticar al usuario en el sistema
+// @Description Método que permite autenticar al usuario en el sistema
+// @tags User
+// @Accept json
+// @Produce json
+// @Param requestLogin body requestLogin true "Datos para la autenticación"
+// @Success 200 {object} ResponseLogin
+// @Router /api/v1/user/login [post]
+func (h *handlerUser) Login(c *fiber.Ctx) error {
+	res := ResponseLogin{Error: true}
+	req := requestLogin{}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't bind model create wallets: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	user, code, err := srvAuth.SrvUser.GetUserByEmail(req.Email)
+	if err != nil {
+		logger.Error.Printf("couldn't get user by email: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if user == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(10, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if !password.Compare(user.ID, user.Password, req.Password) {
+		res.Code, res.Type, res.Msg = msg.GetByCode(10, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	userRole, code, err := srvAuth.SrvUserRole.GetUseRoleByUserID(user.ID)
+	if err != nil {
+		logger.Error.Printf("couldn't get user role: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if userRole == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	role, code, err := srvAuth.SrvRole.GetRoleByID(userRole.RoleId)
+	if err != nil {
+		logger.Error.Printf("couldn't get role: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if role == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(72, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	token, code, err := jwt.GenerateJWT((*models.User)(user), role.Name)
+	if err != nil {
+		logger.Error.Printf("couldn't generate user: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(10, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = Token{
+		AccessToken:  token,
+		RefreshToken: token,
+	}
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
 }
 
 // uploadSelfie godoc
@@ -243,7 +324,7 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
-	userTmp, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	userTmp, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su numero de identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -369,7 +450,7 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -425,7 +506,7 @@ func (h *handlerUser) getFinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -477,7 +558,7 @@ func (h *handlerUser) getFinishValidationIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -538,7 +619,7 @@ func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.IdNumber)
+	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)

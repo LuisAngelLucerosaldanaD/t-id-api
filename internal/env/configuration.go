@@ -33,6 +33,7 @@ type App struct {
 	LogReviewInterval int    `json:"log_review_interval"`
 	EcdsaPrivateKey   string `json:"ecdsa_private_key"`
 	RSAPublicKey      string `json:"rsa_public_key"`
+	RSAPrivateKey     string `json:"rsa_private_key"`
 	LoggerHttp        bool   `json:"logger_http"`
 	Language          string `json:"language"`
 	TLS               bool   `json:"tls"`
@@ -69,11 +70,12 @@ type Files struct {
 }
 
 type Blockchain struct {
-	UrlAuth  string `json:"url_auth"`
-	UrlApi   string `json:"url_api"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Wallet   string `json:"wallet"`
+	UrlAuth         string `json:"url_auth"`
+	UrlApi          string `json:"url_api"`
+	UrlGetPublicKey string `json:"url_get_public_key"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	Wallet          string `json:"wallet"`
 }
 
 type Aws struct {

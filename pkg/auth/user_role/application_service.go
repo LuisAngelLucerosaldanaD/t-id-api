@@ -14,6 +14,7 @@ type PortsServerUseRole interface {
 	GetUseRoleByID(id string) (*UseRole, int, error)
 	GetAllUseRole() ([]*UseRole, error)
 	UpdateUseRoleByUserID(userId string, roleId string) (*UseRole, int, error)
+	GetUseRoleByUserID(id string) (*UseRole, int, error)
 }
 
 type service struct {
@@ -78,6 +79,19 @@ func (s *service) GetUseRoleByID(id string) (*UseRole, int, error) {
 		return nil, 15, fmt.Errorf("id isn't uuid")
 	}
 	m, err := s.repository.getByID(id)
+	if err != nil {
+		logger.Error.Println(s.txID, " - couldn`t getByID row:", err)
+		return nil, 22, err
+	}
+	return m, 29, nil
+}
+
+func (s *service) GetUseRoleByUserID(id string) (*UseRole, int, error) {
+	if !govalidator.IsUUID(id) {
+		logger.Error.Println(s.txID, " - don't meet validations:", fmt.Errorf("user id isn't uuid"))
+		return nil, 15, fmt.Errorf("user id isn't uuid")
+	}
+	m, err := s.repository.getByUseID(id)
 	if err != nil {
 		logger.Error.Println(s.txID, " - couldn`t getByID row:", err)
 		return nil, 22, err

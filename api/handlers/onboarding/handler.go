@@ -123,8 +123,6 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		StatusId:       0,
 		FailedAttempts: 0,
 		IsDeleted:      false,
-		CreatedAt:      time.Time{},
-		UpdatedAt:      time.Time{},
 	})
 	if err != nil {
 		logger.Error.Printf("couldn't create user, error: %v", err)
@@ -348,8 +346,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		FailedAttempts: 0,
 		BirthDate:      &birthDate,
 		IsDeleted:      false,
-		CreatedAt:      time.Time{},
-		UpdatedAt:      time.Time{},
 	})
 	if err != nil {
 		logger.Error.Printf("couldn't update basic data of user, error: %v", err)
@@ -371,7 +367,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	walletInfo, err := blockchain.CreateAccountAndWallet(user, req.Selfie, req.UserID+"_selfie.jpg")
+	walletInfo, err := blockchain.CreateWallet(user)
 	if err != nil {
 		logger.Error.Printf("No se pudo crear el usuario en OnlyOne, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
@@ -379,7 +375,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	}
 
 	description := "Validación de identidad del usuario"
-	trxId, err := blockchain.CreateTransactionV2(user, "Validación de identidad", description, walletInfo.Id, "")
+	trxId, err := blockchain.CreateTransaction(user, "Validación de identidad", description, walletInfo.Id)
 	if err != nil {
 		logger.Error.Printf("No se pudo consultar el usuario, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)

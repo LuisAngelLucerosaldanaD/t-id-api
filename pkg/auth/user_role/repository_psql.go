@@ -2,6 +2,7 @@ package user_role
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -110,4 +111,17 @@ func (s *psql) updateRoleByUserid(m *UseRole) error {
 		return fmt.Errorf("ecatch:108")
 	}
 	return nil
+}
+
+func (s *psql) getByUseID(id string) (*UseRole, error) {
+	const psqlGetByUserID = `SELECT id , user_id, role_id, created_at, updated_at FROM auth.user_role WHERE user_id = $1 limit 1`
+	mdl := UseRole{}
+	err := s.DB.Get(&mdl, psqlGetByUserID, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return &mdl, err
+	}
+	return &mdl, nil
 }

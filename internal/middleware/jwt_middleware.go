@@ -33,8 +33,8 @@ func init() {
 }
 
 type jwtCustomClaims struct {
-	User      *models.UserToken `json:"user"`
-	IPAddress string            `json:"ip_address"`
+	User      *models.User `json:"user"`
+	IPAddress string       `json:"ip_address"`
 	jwt.RegisteredClaims
 }
 
@@ -56,11 +56,11 @@ func jwtError(c *fiber.Ctx, err error) error {
 		JSON(fiber.Map{"status": "error", "message": "Invalid or expired JWT", "data": nil})
 }
 
-func GetUser(c *fiber.Ctx) (*models.UserToken, error) {
+func GetUser(c *fiber.Ctx) (*models.User, error) {
 	bearer := c.Get("Authorization")
 	tkn := bearer[7:]
 
-	var u *models.UserToken
+	var u *models.User
 	verifyFunction := func(tkn *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	}
@@ -89,7 +89,7 @@ func GetUser(c *fiber.Ctx) (*models.UserToken, error) {
 		logger.Warning.Printf("Token no Valido: %v", err)
 		return u, fmt.Errorf("token no Valido")
 	}
-	if c.IP() != u.RealIP {
+	if c.IP() != u.RealIp {
 		logger.Warning.Printf("token creado en un origen diferente : %v", err)
 		return u, fmt.Errorf("token creado en un origen diferente")
 	}
