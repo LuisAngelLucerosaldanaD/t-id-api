@@ -158,13 +158,35 @@ definitions:
       type:
         type: integer
     type: object
+  users.ResponseLogin:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/users.Token'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  users.Token:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
   users.User:
     properties:
       age:
         type: integer
-      back_document_img:
-        type: string
       birth_date:
+        type: string
+      block_date:
+        type: string
+      cellphone:
         type: string
       city:
         type: string
@@ -172,37 +194,49 @@ definitions:
         type: string
       created_at:
         type: string
+      deleted_at:
+        type: string
       department:
+        type: string
+      disabled_date:
         type: string
       document_number:
         type: string
       email:
         type: string
+      failed_attempts:
+        type: integer
       first_name:
         type: string
       first_surname:
-        type: string
-      front_document_img:
         type: string
       gender:
         type: string
       id:
         type: string
+      is_deleted:
+        type: boolean
+      last_change_password:
+        type: string
+      last_login:
+        type: string
       nationality:
         type: string
-      role:
+      nickname:
+        type: string
+      real_ip:
         type: string
       second_name:
         type: string
       second_surname:
         type: string
-      selfie_img:
-        type: string
-      transaction_id:
-        type: string
+      status_id:
+        type: integer
       type_document:
         type: string
       updated_at:
+        type: string
+      verified_code:
         type: string
     type: object
   users.reqUploadDocument:
@@ -221,7 +255,14 @@ definitions:
       user_id:
         type: string
     type: object
-  users.resGetUserSession:
+  users.requestLogin:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  users.resGetUser:
     properties:
       code:
         type: integer
@@ -259,7 +300,7 @@ definitions:
       type:
         type: integer
     type: object
-host: 172.147.77.149:50050
+host: check-id-dev-api.btigersystem.net
 info:
   contact:
     email: luis.lucero@bjungle.net
@@ -427,11 +468,6 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: ID del usuario
-        in: path
-        name: userID
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -442,6 +478,28 @@ paths:
       summary: Obtención de los datos de trazabilidad de un usuario por su id
       tags:
       - Traceability
+  /api/v1/user:
+    get:
+      consumes:
+      - application/json
+      description: Método para obtener los datos registrados del usuario
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.resGetUser'
+      summary: Obtiene los datos registrados del usuario
+      tags:
+      - User
   /api/v1/user/create:
     post:
       consumes:
@@ -464,7 +522,7 @@ paths:
       summary: Metodo que permite la creación de un usuario
       tags:
       - User
-  /api/v1/user/file:
+  /api/v1/user/file/{id}:
     get:
       consumes:
       - application/json
@@ -538,6 +596,28 @@ paths:
       summary: Permite validar si ha terminado la validación de identidad de un usuario
       tags:
       - User
+  /api/v1/user/login:
+    post:
+      consumes:
+      - application/json
+      description: Método que permite autenticar al usuario en el sistema
+      parameters:
+      - description: Datos para la autenticación
+        in: body
+        name: requestLogin
+        required: true
+        schema:
+          $ref: '#/definitions/users.requestLogin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.ResponseLogin'
+      summary: Método que permite autenticar al usuario en el sistema
+      tags:
+      - User
   /api/v1/user/upload-documents:
     post:
       consumes:
@@ -592,29 +672,6 @@ paths:
           schema:
             $ref: '#/definitions/users.responseAnny'
       summary: Carga de selfie del usuario
-      tags:
-      - User
-  /api/v1/user/user-session:
-    get:
-      consumes:
-      - application/json
-      description: Método para el obtener la información del usuario en sesión por
-        su email o id
-      parameters:
-      - default: Bearer <Add access token here>
-        description: Authorization
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/users.resGetUserSession'
-      summary: Obtiene los datos registrados del usuario por su email o su id
       tags:
       - User
   /api/v1/user/validate:

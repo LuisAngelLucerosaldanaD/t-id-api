@@ -253,13 +253,6 @@ const docTemplate = `{
                         "name": "Authorization",
                         "in": "header",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "ID del usuario",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -267,6 +260,39 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/traceability.resTraceability"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user": {
+            "get": {
+                "description": "Método para obtener los datos registrados del usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Obtiene los datos registrados del usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.resGetUser"
                         }
                     }
                 }
@@ -306,7 +332,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/user/file": {
+        "/api/v1/user/file/{id}": {
             "get": {
                 "description": "Método que permite validar si ha terminado la validación de identidad de un usuario",
                 "consumes": [
@@ -412,6 +438,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/user/login": {
+            "post": {
+                "description": "Método que permite autenticar al usuario en el sistema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Método que permite autenticar al usuario en el sistema",
+                "parameters": [
+                    {
+                        "description": "Datos para la autenticación",
+                        "name": "requestLogin",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.requestLogin"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.ResponseLogin"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/upload-documents": {
             "post": {
                 "description": "Método para cargar el documento de identidad",
@@ -491,39 +551,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/users.responseAnny"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/user/user-session": {
-            "get": {
-                "description": "Método para el obtener la información del usuario en sesión por su email o id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Obtiene los datos registrados del usuario por su email o su id",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/users.resGetUserSession"
                         }
                     }
                 }
@@ -806,16 +833,50 @@ const docTemplate = `{
                 }
             }
         },
+        "users.ResponseLogin": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/users.Token"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.Token": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
         "users.User": {
             "type": "object",
             "properties": {
                 "age": {
                     "type": "integer"
                 },
-                "back_document_img": {
+                "birth_date": {
                     "type": "string"
                 },
-                "birth_date": {
+                "block_date": {
+                    "type": "string"
+                },
+                "cellphone": {
                     "type": "string"
                 },
                 "city": {
@@ -827,7 +888,13 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "deleted_at": {
+                    "type": "string"
+                },
                 "department": {
+                    "type": "string"
+                },
+                "disabled_date": {
                     "type": "string"
                 },
                 "document_number": {
@@ -836,13 +903,13 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "failed_attempts": {
+                    "type": "integer"
+                },
                 "first_name": {
                     "type": "string"
                 },
                 "first_surname": {
-                    "type": "string"
-                },
-                "front_document_img": {
                     "type": "string"
                 },
                 "gender": {
@@ -851,10 +918,22 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "is_deleted": {
+                    "type": "boolean"
+                },
+                "last_change_password": {
+                    "type": "string"
+                },
+                "last_login": {
+                    "type": "string"
+                },
                 "nationality": {
                     "type": "string"
                 },
-                "role": {
+                "nickname": {
+                    "type": "string"
+                },
+                "real_ip": {
                     "type": "string"
                 },
                 "second_name": {
@@ -863,16 +942,16 @@ const docTemplate = `{
                 "second_surname": {
                     "type": "string"
                 },
-                "selfie_img": {
-                    "type": "string"
-                },
-                "transaction_id": {
-                    "type": "string"
+                "status_id": {
+                    "type": "integer"
                 },
                 "type_document": {
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                },
+                "verified_code": {
                     "type": "string"
                 }
             }
@@ -902,7 +981,18 @@ const docTemplate = `{
                 }
             }
         },
-        "users.resGetUserSession": {
+        "users.requestLogin": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.resGetUser": {
             "type": "object",
             "properties": {
                 "code": {
@@ -984,7 +1074,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.4",
-	Host:             "172.147.77.149:50050",
+	Host:             "check-id-dev-api.btigersystem.net",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Check ID OnBoarding",

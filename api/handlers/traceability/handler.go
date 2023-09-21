@@ -22,7 +22,6 @@ type handlerTraceability struct {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param userID path string true "ID del usuario"
 // @Success 200 {object} resTraceability
 // @Router /api/v1/traceability [get]
 func (h *handlerTraceability) getTraceability(c *fiber.Ctx) error {

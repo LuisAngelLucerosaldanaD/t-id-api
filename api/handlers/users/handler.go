@@ -85,6 +85,8 @@ func (h *handlerUser) Login(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
+	user.RealIp = c.IP()
+
 	token, code, err := jwt.GenerateJWT((*models.User)(user), role.Name)
 	if err != nil {
 		logger.Error.Printf("couldn't generate user: %v", err)
@@ -303,17 +305,17 @@ func (h *handlerUser) createUser(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(res)
 }
 
-// getUserSession godoc
-// @Summary Obtiene los datos registrados del usuario por su email o su id
-// @Description Método para el obtener la información del usuario en sesión por su email o id
+// getUserById godoc
+// @Summary Obtiene los datos registrados del usuario
+// @Description Método para obtener los datos registrados del usuario
 // @tags User
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Success 200 {object} resGetUserSession
-// @Router /api/v1/user/user-session [get]
-func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
-	res := resGetUserSession{}
+// @Success 200 {object} resGetUser
+// @Router /api/v1/user [get]
+func (h *handlerUser) getUserById(c *fiber.Ctx) error {
+	res := resGetUser{}
 	userToken, err := middleware.GetUser(c)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario del token, error: %s", err.Error())
@@ -322,7 +324,6 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 	}
 
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
-	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
 
 	userTmp, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
@@ -348,13 +349,6 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 
 	user := userTmp
 
-	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener la validación del usuario, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
 	role, code, err := srvAuth.SrvRole.GetRoleByUserID(user.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el rol del usuario, error: %s", err.Error())
@@ -368,62 +362,36 @@ func (h *handlerUser) getUserSession(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	transactionID := ""
-	selfieImg := ""
-	frontDocument := ""
-	backDocument := ""
-
-	if onboarding != nil {
-		transactionID = onboarding.TransactionId
-	}
-
-	files, code, err := srvCfg.SrvFiles.GetFilesByUserID(user.ID)
-	if err != nil {
-		logger.Error.Printf("No se pudo obtener la validación del usuario, error: %s", err.Error())
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	if files != nil {
-		for _, file := range files {
-			fileID := strconv.FormatInt(file.ID, 10)
-			switch file.Type {
-			case 1:
-				selfieImg = fileID
-				break
-			case 2:
-				frontDocument = fileID
-				break
-			default:
-				backDocument = fileID
-				break
-			}
-		}
-	}
-
 	res.Data = &User{
-		ID:               user.ID,
-		TypeDocument:     user.TypeDocument,
-		DocumentNumber:   user.DocumentNumber,
-		Email:            user.Email,
-		FirstName:        *user.FirstName,
-		SecondName:       *user.SecondName,
-		SecondSurname:    *user.SecondSurname,
-		Age:              user.Age,
-		Gender:           user.Gender,
-		Nationality:      user.Nationality,
-		FirstSurname:     user.FirstSurname,
-		BirthDate:        user.BirthDate,
-		Country:          user.Country,
-		TransactionId:    transactionID,
-		Department:       user.Department,
-		City:             user.City,
-		SelfieImg:        selfieImg,
-		BackDocumentImg:  backDocument,
-		FrontDocumentImg: frontDocument,
-		CreatedAt:        user.CreatedAt,
-		Role:             role.Name,
-		UpdatedAt:        user.UpdatedAt,
+		ID:                 user.ID,
+		Nickname:           user.Nickname,
+		Email:              user.Email,
+		FirstName:          user.FirstName,
+		SecondName:         user.SecondName,
+		FirstSurname:       user.FirstSurname,
+		SecondSurname:      user.SecondSurname,
+		Age:                user.Age,
+		TypeDocument:       user.TypeDocument,
+		DocumentNumber:     user.DocumentNumber,
+		Cellphone:          user.Cellphone,
+		Gender:             user.Gender,
+		Nationality:        user.Nationality,
+		Country:            user.Country,
+		Department:         user.Department,
+		City:               user.City,
+		RealIp:             user.RealIp,
+		StatusId:           user.StatusId,
+		FailedAttempts:     user.FailedAttempts,
+		BlockDate:          user.BlockDate,
+		DisabledDate:       user.DisabledDate,
+		LastLogin:          user.LastLogin,
+		LastChangePassword: user.LastChangePassword,
+		BirthDate:          user.BirthDate,
+		VerifiedCode:       user.VerifiedCode,
+		IsDeleted:          user.IsDeleted,
+		DeletedAt:          user.DeletedAt,
+		CreatedAt:          user.CreatedAt,
+		UpdatedAt:          user.UpdatedAt,
 	}
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
@@ -599,7 +567,7 @@ func (h *handlerUser) getFinishValidationIdentity(c *fiber.Ctx) error {
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param id path string true "Id del archivo"
 // @Success 200 {object} ResponseGetUserFile
-// @Router /api/v1/user/file [get]
+// @Router /api/v1/user/file/{id} [get]
 func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 	res := ResponseGetUserFile{Error: true}
 	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
