@@ -1,6 +1,7 @@
 package users
 
 import (
+	"check-id-api/api/handlers/onboarding"
 	"time"
 )
 
@@ -10,6 +11,14 @@ type responseAnny struct {
 	Code  int         `json:"code"`
 	Type  int         `json:"type"`
 	Msg   string      `json:"msg"`
+}
+
+type responseCreateUser struct {
+	Error bool                   `json:"error"`
+	Data  *onboarding.Onboarding `json:"data"`
+	Code  int                    `json:"code"`
+	Type  int                    `json:"type"`
+	Msg   string                 `json:"msg"`
 }
 
 type requestLogin struct {
@@ -85,6 +94,11 @@ type User struct {
 	VerifiedCode       *string    `json:"verified_code"`
 	IsDeleted          bool       `json:"is_deleted"`
 	DeletedAt          *time.Time `json:"deleted_at"`
+	SelfieImg          string     `json:"selfie_img"`
+	FrontDocumentImg   string     `json:"front_document_img"`
+	BackDocumentImg    string     `json:"back_document_img"`
+	TransactionId      string     `json:"transaction_id"`
+	ProcessURL         string     `json:"process_url"`
 	CreatedAt          time.Time  `json:"created_at"`
 	UpdatedAt          time.Time  `json:"updated_at"`
 }

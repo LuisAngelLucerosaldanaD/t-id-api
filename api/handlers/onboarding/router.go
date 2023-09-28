@@ -12,6 +12,6 @@ func RouterOnboarding(app *fiber.App, db *sqlx.DB, txID string) {
 	v1 := api.Group("/v1")
 	onboarding := v1.Group("/onboarding")
 	onboarding.Post("/", middleware.JWTProtected(), h.Onboarding)
-	onboarding.Post("/process", middleware.JWTProtected(), h.FinishOnboarding)
-	onboarding.Post("/validate_identity", middleware.JWTProtected(), h.ValidateIdentity)
+	onboarding.Post("/process", h.FinishOnboarding)
+	onboarding.Post("/validate_identity", h.ValidateIdentity)
 }

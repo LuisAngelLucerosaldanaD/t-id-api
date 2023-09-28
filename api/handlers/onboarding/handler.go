@@ -6,6 +6,7 @@ import (
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/msg"
+	"check-id-api/internal/password"
 	"check-id-api/internal/persons"
 	"check-id-api/internal/send_grid"
 	"check-id-api/internal/template"
@@ -111,7 +112,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		ID:             uuid.New().String(),
 		Nickname:       req.Email,
 		Email:          req.Email,
-		Password:       req.DocumentNumber,
+		Password:       password.Encrypt(req.DocumentNumber),
 		FirstName:      req.FirstName,
 		SecondName:     req.SecondName,
 		FirstSurname:   req.FirstSurname,
@@ -166,7 +167,6 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 // @tags Onboarding
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param RequestProcessOnboarding body RequestProcessOnboarding true "Datos para validar el enrolamiento del usuario"
 // @Success 200 {object} ResProcessOnboarding
 // @Router /api/v1/onboarding/process [post]
@@ -231,7 +231,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 			return c.Status(http.StatusAccepted).JSON(res)
 		}
 
-		_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.ID, "refused", "")
+		_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "refused", "")
 		if err != nil {
 			logger.Error.Printf("couldn't update onboarding, error: %v", err)
 			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -459,7 +459,6 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 // @tags Onboarding
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
 // @Param RequestProcessOnboarding body RequestProcessOnboarding true "Datos para validar el enrolamiento del usuario"
 // @Success 200 {object} ResProcessOnboarding
 // @Router /api/v1/onboarding/process [post]

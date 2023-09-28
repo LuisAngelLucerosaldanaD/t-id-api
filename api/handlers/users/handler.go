@@ -1,6 +1,8 @@
 package users
 
 import (
+	"check-id-api/api/handlers/onboarding"
+	"check-id-api/internal/env"
 	"check-id-api/internal/jwt"
 	"check-id-api/internal/logger"
 	"check-id-api/internal/middleware"
@@ -8,9 +10,10 @@ import (
 	"check-id-api/internal/msg"
 	"check-id-api/internal/password"
 	"check-id-api/pkg/auth"
-	user2 "check-id-api/pkg/auth/user"
+	"check-id-api/pkg/auth/user"
 	"check-id-api/pkg/cfg"
 	"check-id-api/pkg/trx"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -21,6 +24,96 @@ import (
 type handlerUser struct {
 	DB   *sqlx.DB
 	TxID string
+}
+
+// createUser godoc
+// @Summary Método que permite la creación de un usuario con los datos básicos
+// @Description Método que permite la creación de un usuario con los datos básicos y permite iniciar el proceso de validación de identidad usando checkid como cliente para la solicitud
+// @tags User
+// @Accept json
+// @Produce json
+// @Param RequestCreateUser body RequestCreateUser true "Datos para la creación del usuario"
+// @Success 200 {object} responseCreateUser
+// @Router /api/v1/user/create [post]
+func (h *handlerUser) createUser(c *fiber.Ctx) error {
+	res := responseCreateUser{Error: true}
+	req := RequestCreateUser{}
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+	e := env.NewConfiguration()
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't bind model create user: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	userFound, code, err := srvAuth.SrvUser.GetUserByEmail(req.Email)
+	if err != nil {
+		logger.Error.Printf("couldn't bind get user by email: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if userFound != nil {
+		res.Code, res.Type, res.Msg = 102, 1, "Ya existe un usuario con el correo proporcionado"
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	newUser, code, err := srvAuth.SrvUser.CreateUser(&user.User{
+		ID:             uuid.New().String(),
+		Nickname:       req.Email,
+		Email:          req.Email,
+		Password:       password.Encrypt(req.Password),
+		DocumentNumber: req.DocumentNumber,
+		Cellphone:      req.Cellphone,
+		RealIp:         c.IP(),
+		StatusId:       0,
+		FailedAttempts: 0,
+		IsDeleted:      false,
+	})
+	if err != nil {
+		logger.Error.Printf("couldn't create user, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvAuth.SrvUserRole.CreateUseRole(uuid.New().String(), newUser.ID, "14cbf8d2-485a-4fbe-baa6-16273c765f14")
+	if err != nil {
+		logger.Error.Printf("couldn't create user role, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info", "Registro de información básica", newUser.ID)
+	if err != nil {
+		logger.Error.Printf("couldn't create traceability, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	newRequestOnboarding, code, err := srvAuth.SrvOnboardingCheckId.CreateOnboardingCheckId(newUser.ID, c.IP())
+	if err != nil {
+		logger.Error.Printf("couldn't create onboarding check id, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	newOnboarding, code, err := srvAuth.SrvOnboarding.CreateOnboarding(uuid.New().String(), 0, strconv.FormatInt(newRequestOnboarding.ID, 10), newUser.ID, "started", "")
+	if err != nil {
+		logger.Error.Printf("couldn't create onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = &onboarding.Onboarding{
+		Url:    e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?process=enroll&onboarding_id=%s&user_id=%s&email=%s", newOnboarding.ID, newUser.ID, req.Email),
+		Method: "onboarding",
+	}
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
 }
 
 // Login godoc
@@ -86,6 +179,7 @@ func (h *handlerUser) Login(c *fiber.Ctx) error {
 	}
 
 	user.RealIp = c.IP()
+	user.Password = ""
 
 	token, code, err := jwt.GenerateJWT((*models.User)(user), role.Name)
 	if err != nil {
@@ -244,67 +338,6 @@ func (h *handlerUser) uploadDocuments(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(res)
 }
 
-// createUser godoc
-// @Summary Metodo que permite la creación de un usuario
-// @Description Metodo que permite la creación de un usuario
-// @tags User
-// @Accept json
-// @Produce json
-// @Param BasicInformation body RequestCreateUser true "request of validate user identity"
-// @Success 200 {object} responseAnny
-// @Router /api/v1/user/create [post]
-func (h *handlerUser) createUser(c *fiber.Ctx) error {
-	res := responseAnny{Error: true}
-	req := RequestCreateUser{}
-	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
-	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
-
-	err := c.BodyParser(&req)
-	if err != nil {
-		logger.Error.Printf("couldn't bind model create user: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	user, code, err := srvAuth.SrvUser.CreateUser(&user2.User{
-		ID:             uuid.New().String(),
-		Nickname:       req.Email,
-		Email:          req.Email,
-		Password:       req.Password,
-		DocumentNumber: req.DocumentNumber,
-		Cellphone:      req.Cellphone,
-		RealIp:         c.IP(),
-		StatusId:       0,
-		FailedAttempts: 0,
-		IsDeleted:      false,
-	})
-	if err != nil {
-		logger.Error.Printf("couldn't create user, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvAuth.SrvUserRole.CreateUseRole(uuid.New().String(), user.ID, "14cbf8d2-485a-4fbe-baa6-16273c765f14")
-	if err != nil {
-		logger.Error.Printf("couldn't create user role, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	_, code, err = srvTrx.SrvTraceability.CreateTraceability("Registro", "info",
-		"Creación de la cuenta en la plataforma", user.ID)
-	if err != nil {
-		logger.Error.Printf("couldn't create traceability, error: %v", err)
-		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
-		return c.Status(http.StatusAccepted).JSON(res)
-	}
-
-	res.Data = "Datos registrados correctamente"
-	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
-	res.Error = false
-	return c.Status(http.StatusOK).JSON(res)
-}
-
 // getUserById godoc
 // @Summary Obtiene los datos registrados del usuario
 // @Description Método para obtener los datos registrados del usuario
@@ -324,16 +357,18 @@ func (h *handlerUser) getUserById(c *fiber.Ctx) error {
 	}
 
 	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	e := env.NewConfiguration()
 
-	userTmp, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
+	currentUser, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su numero de identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if userTmp == nil {
-		userTmp, code, err = srvAuth.SrvUser.GetUserByEmail(userToken.Email)
+	if currentUser == nil {
+		currentUser, code, err = srvAuth.SrvUser.GetUserByEmail(userToken.Email)
 		if err != nil {
 			logger.Error.Printf("No se pudo obtener el usuario por su email, error: %s", err.Error())
 			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -341,15 +376,13 @@ func (h *handlerUser) getUserById(c *fiber.Ctx) error {
 		}
 	}
 
-	if userTmp == nil {
+	if currentUser == nil {
 		res.Error = false
 		res.Code, res.Type, res.Msg = msg.GetByCode(95, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user := userTmp
-
-	role, code, err := srvAuth.SrvRole.GetRoleByUserID(user.ID)
+	role, code, err := srvAuth.SrvRole.GetRoleByUserID(currentUser.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el rol del usuario, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -362,37 +395,96 @@ func (h *handlerUser) getUserById(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = &User{
-		ID:                 user.ID,
-		Nickname:           user.Nickname,
-		Email:              user.Email,
-		FirstName:          user.FirstName,
-		SecondName:         user.SecondName,
-		FirstSurname:       user.FirstSurname,
-		SecondSurname:      user.SecondSurname,
-		Age:                user.Age,
-		TypeDocument:       user.TypeDocument,
-		DocumentNumber:     user.DocumentNumber,
-		Cellphone:          user.Cellphone,
-		Gender:             user.Gender,
-		Nationality:        user.Nationality,
-		Country:            user.Country,
-		Department:         user.Department,
-		City:               user.City,
-		RealIp:             user.RealIp,
-		StatusId:           user.StatusId,
-		FailedAttempts:     user.FailedAttempts,
-		BlockDate:          user.BlockDate,
-		DisabledDate:       user.DisabledDate,
-		LastLogin:          user.LastLogin,
-		LastChangePassword: user.LastChangePassword,
-		BirthDate:          user.BirthDate,
-		VerifiedCode:       user.VerifiedCode,
-		IsDeleted:          user.IsDeleted,
-		DeletedAt:          user.DeletedAt,
-		CreatedAt:          user.CreatedAt,
-		UpdatedAt:          user.UpdatedAt,
+	files, code, err := srvCfg.SrvFiles.GetFilesByUserID(currentUser.ID)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener la validación del usuario, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
 	}
+
+	userResponse := &User{
+		ID:                 currentUser.ID,
+		Nickname:           currentUser.Nickname,
+		Email:              currentUser.Email,
+		FirstName:          currentUser.FirstName,
+		SecondName:         currentUser.SecondName,
+		FirstSurname:       currentUser.FirstSurname,
+		SecondSurname:      currentUser.SecondSurname,
+		Age:                currentUser.Age,
+		TypeDocument:       currentUser.TypeDocument,
+		DocumentNumber:     currentUser.DocumentNumber,
+		Cellphone:          currentUser.Cellphone,
+		Gender:             currentUser.Gender,
+		Nationality:        currentUser.Nationality,
+		Country:            currentUser.Country,
+		Department:         currentUser.Department,
+		City:               currentUser.City,
+		RealIp:             currentUser.RealIp,
+		StatusId:           currentUser.StatusId,
+		FailedAttempts:     currentUser.FailedAttempts,
+		BlockDate:          currentUser.BlockDate,
+		DisabledDate:       currentUser.DisabledDate,
+		LastLogin:          currentUser.LastLogin,
+		LastChangePassword: currentUser.LastChangePassword,
+		BirthDate:          currentUser.BirthDate,
+		VerifiedCode:       currentUser.VerifiedCode,
+		IsDeleted:          currentUser.IsDeleted,
+		DeletedAt:          currentUser.DeletedAt,
+		CreatedAt:          currentUser.CreatedAt,
+		UpdatedAt:          currentUser.UpdatedAt,
+	}
+
+	if files != nil {
+		for _, file := range files {
+			fileID := strconv.FormatInt(file.ID, 10)
+			switch file.Type {
+			case 1:
+				userResponse.SelfieImg = fileID
+				break
+			case 2:
+				userResponse.FrontDocumentImg = fileID
+				break
+			default:
+				userResponse.BackDocumentImg = fileID
+				break
+			}
+		}
+	}
+
+	lifeTestUser, code, err := srvAuth.SrvLifeTest.GetLifeTestByUserID(currentUser.ID)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener la prueba de vida del usuario, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if lifeTestUser != nil {
+		userResponse.ProcessURL = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?process=validation&validation_id=%d&user_id=%s&email=%s", lifeTestUser.ID, currentUser.ID, currentUser.Email)
+		res.Data = userResponse
+		res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+		res.Error = false
+		return c.Status(http.StatusOK).JSON(res)
+	}
+
+	onboardingUser, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(currentUser.ID)
+	if err != nil {
+		logger.Error.Printf("No se pudo obtener la validación del usuario, error: %s", err.Error())
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboardingUser == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	userResponse.TransactionId = onboardingUser.TransactionId
+
+	if onboardingUser.Status == "started" {
+		userResponse.ProcessURL = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?process=enroll&onboarding_id=%s&user_id=%s&email=%s", onboardingUser.ID, currentUser.ID, currentUser.Email)
+	}
+
+	res.Data = userResponse
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)

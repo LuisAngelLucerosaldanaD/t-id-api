@@ -287,6 +287,19 @@ definitions:
       type:
         type: integer
     type: object
+  users.responseCreateUser:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/check-id-api_api_handlers_onboarding.Onboarding'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
   users.responseFinishOnboarding:
     properties:
       code:
@@ -504,11 +517,13 @@ paths:
     post:
       consumes:
       - application/json
-      description: Metodo que permite la creación de un usuario
+      description: Método que permite la creación de un usuario con los datos básicos
+        y permite iniciar el proceso de validación de identidad usando checkid como
+        cliente para la solicitud
       parameters:
-      - description: request of validate user identity
+      - description: Datos para la creación del usuario
         in: body
-        name: BasicInformation
+        name: RequestCreateUser
         required: true
         schema:
           $ref: '#/definitions/users.RequestCreateUser'
@@ -518,8 +533,8 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/users.responseAnny'
-      summary: Metodo que permite la creación de un usuario
+            $ref: '#/definitions/users.responseCreateUser'
+      summary: Método que permite la creación de un usuario con los datos básicos
       tags:
       - User
   /api/v1/user/file/{id}:

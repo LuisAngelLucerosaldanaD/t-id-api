@@ -26,7 +26,7 @@ func newLifeTestPsqlRepository(db *sqlx.DB, user *models.User, txID string) *psq
 
 // Create registra en la BD
 func (s *psql) create(m *LifeTest) error {
-	const psqlInsert = `INSERT INTO cfg.life_test (client_id, max_num_validation, request_id, expired_at, user_id, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at, updated_at`
+	const psqlInsert = `INSERT INTO auth.life_test (client_id, max_num_test, request_id, expired_at, user_id, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at, updated_at`
 	stmt, err := s.DB.Prepare(psqlInsert)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (s *psql) create(m *LifeTest) error {
 func (s *psql) update(m *LifeTest) error {
 	date := time.Now()
 	m.UpdatedAt = date
-	const psqlUpdate = `UPDATE cfg.life_test SET client_id = :client_id, max_num_validation = :max_num_validation, request_id = :request_id, expired_at = :expired_at, user_id = :user_id, status = :status, updated_at = :updated_at WHERE id = :id `
+	const psqlUpdate = `UPDATE auth.life_test SET client_id = :client_id, max_num_test = :max_num_test, request_id = :request_id, expired_at = :expired_at, user_id = :user_id, status = :status, updated_at = :updated_at WHERE id = :id `
 	rs, err := s.DB.NamedExec(psqlUpdate, &m)
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func (s *psql) update(m *LifeTest) error {
 
 // Delete elimina un registro de la BD
 func (s *psql) delete(id int64) error {
-	const psqlDelete = `DELETE FROM cfg.life_test WHERE id = :id `
+	const psqlDelete = `DELETE FROM auth.life_test WHERE id = :id `
 	m := LifeTest{ID: id}
 	rs, err := s.DB.NamedExec(psqlDelete, &m)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *psql) delete(id int64) error {
 
 // GetByID consulta un registro por su ID
 func (s *psql) getByID(id int64) (*LifeTest, error) {
-	const psqlGetByID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_id, status, created_at, updated_at FROM cfg.life_test WHERE id = $1 `
+	const psqlGetByID = `SELECT id , client_id, max_num_test, request_id, expired_at, user_id, status, created_at, updated_at FROM auth.life_test WHERE id = $1 `
 	mdl := LifeTest{}
 	err := s.DB.Get(&mdl, psqlGetByID, id)
 	if err != nil {
@@ -92,7 +92,7 @@ func (s *psql) getByID(id int64) (*LifeTest, error) {
 // GetAll consulta todos los registros de la BD
 func (s *psql) getAll() ([]*LifeTest, error) {
 	var ms []*LifeTest
-	const psqlGetAll = ` SELECT id , client_id, max_num_validation, request_id, expired_at, user_id, status, created_at, updated_at FROM cfg.life_test `
+	const psqlGetAll = ` SELECT id , client_id, max_num_test, request_id, expired_at, user_id, status, created_at, updated_at FROM auth.life_test `
 
 	err := s.DB.Select(&ms, psqlGetAll)
 	if err != nil {
@@ -106,7 +106,7 @@ func (s *psql) getAll() ([]*LifeTest, error) {
 
 // getByClientIDAndRequestID consulta un registro por su ID
 func (s *psql) getByClientIDAndRequestID(clientIid int64, requestID string) (*LifeTest, error) {
-	const psqlGetByClientID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_id, status, created_at, updated_at FROM cfg.life_test WHERE client_id = %d and request_id = '%s' limit 1`
+	const psqlGetByClientID = `SELECT id , client_id, max_num_test, request_id, expired_at, user_id, status, created_at, updated_at FROM auth.life_test WHERE client_id = %d and request_id = '%s' limit 1`
 	mdl := LifeTest{}
 	query := fmt.Sprintf(psqlGetByClientID, clientIid, requestID)
 	err := s.DB.Get(&mdl, query)
@@ -122,7 +122,7 @@ func (s *psql) getByClientIDAndRequestID(clientIid int64, requestID string) (*Li
 func (s *psql) updateStatus(m *LifeTest) error {
 	date := time.Now()
 	m.UpdatedAt = date
-	const psqlUpdate = `UPDATE cfg.life_test SET status = :status, updated_at = :updated_at WHERE id = :id `
+	const psqlUpdate = `UPDATE auth.life_test SET status = :status, updated_at = :updated_at WHERE id = :id `
 	rs, err := s.DB.NamedExec(psqlUpdate, &m)
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func (s *psql) updateStatus(m *LifeTest) error {
 // GetAll consulta todos los registros de la BD
 func (s *psql) getAllByUserId(userID string) ([]*LifeTest, error) {
 	var ms []*LifeTest
-	const psqlGetAll = ` SELECT id , client_id, max_num_validation, request_id, expired_at, user_id, status, created_at, updated_at FROM cfg.life_test where user_id = $1;`
+	const psqlGetAll = ` SELECT id , client_id, max_num_test, request_id, expired_at, user_id, status, created_at, updated_at FROM auth.life_test where user_id = $1;`
 
 	err := s.DB.Select(&ms, psqlGetAll, userID)
 	if err != nil {
@@ -150,7 +150,7 @@ func (s *psql) getAllByUserId(userID string) ([]*LifeTest, error) {
 
 // GetByID consulta un registro por su ID
 func (s *psql) getByUserID(userId string) (*LifeTest, error) {
-	const psqlGetByID = `SELECT id , client_id, max_num_validation, request_id, expired_at, user_id, status, created_at, updated_at FROM cfg.life_test WHERE id = $1 order by id desc limit 1`
+	const psqlGetByID = `SELECT id , client_id, max_num_test, request_id, expired_at, user_id, status, created_at, updated_at FROM auth.life_test WHERE user_id = $1 order by id desc limit 1`
 	mdl := LifeTest{}
 	err := s.DB.Get(&mdl, psqlGetByID, userId)
 	if err != nil {

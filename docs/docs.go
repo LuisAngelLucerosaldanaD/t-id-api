@@ -300,7 +300,7 @@ const docTemplate = `{
         },
         "/api/v1/user/create": {
             "post": {
-                "description": "Metodo que permite la creación de un usuario",
+                "description": "Método que permite la creación de un usuario con los datos básicos y permite iniciar el proceso de validación de identidad usando checkid como cliente para la solicitud",
                 "consumes": [
                     "application/json"
                 ],
@@ -310,11 +310,11 @@ const docTemplate = `{
                 "tags": [
                     "User"
                 ],
-                "summary": "Metodo que permite la creación de un usuario",
+                "summary": "Método que permite la creación de un usuario con los datos básicos",
                 "parameters": [
                     {
-                        "description": "request of validate user identity",
-                        "name": "BasicInformation",
+                        "description": "Datos para la creación del usuario",
+                        "name": "RequestCreateUser",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -326,7 +326,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/users.responseAnny"
+                            "$ref": "#/definitions/users.responseCreateUser"
                         }
                     }
                 }
@@ -1019,6 +1019,26 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "data": {},
+                "error": {
+                    "type": "boolean"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "users.responseCreateUser": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/check-id-api_api_handlers_onboarding.Onboarding"
+                },
                 "error": {
                     "type": "boolean"
                 },

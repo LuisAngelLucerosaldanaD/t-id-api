@@ -4,6 +4,7 @@ import (
 	"check-id-api/internal/models"
 	"check-id-api/pkg/auth/life_test"
 	"check-id-api/pkg/auth/onboarding"
+	"check-id-api/pkg/auth/onboarding_check_id"
 	"check-id-api/pkg/auth/role"
 	"check-id-api/pkg/auth/user"
 	"check-id-api/pkg/auth/user_role"
@@ -11,11 +12,12 @@ import (
 )
 
 type Server struct {
-	SrvUser       user.PortsServerUser
-	SrvOnboarding onboarding.PortsServerOnboarding
-	SrvUserRole   user_role.PortsServerUseRole
-	SrvRole       role.PortsServerRole
-	SrvLifeTest   life_test.PortsServerLifeTest
+	SrvUser              user.PortsServerUser
+	SrvOnboarding        onboarding.PortsServerOnboarding
+	SrvUserRole          user_role.PortsServerUseRole
+	SrvRole              role.PortsServerRole
+	SrvLifeTest          life_test.PortsServerLifeTest
+	SrvOnboardingCheckId onboarding_check_id.PortsServerOnboardingCheckId
 }
 
 func NewServerAuth(db *sqlx.DB, userModel *models.User, txID string) *Server {
@@ -35,11 +37,15 @@ func NewServerAuth(db *sqlx.DB, userModel *models.User, txID string) *Server {
 	repoLifeTest := life_test.FactoryStorage(db, userModel, txID)
 	srvLifeTest := life_test.NewLifeTestService(repoLifeTest, userModel, txID)
 
+	repoOnboardingCheckId := onboarding_check_id.FactoryStorage(db, userModel, txID)
+	srvOnboardingCheckId := onboarding_check_id.NewOnboardingCheckIdService(repoOnboardingCheckId, userModel, txID)
+
 	return &Server{
-		SrvUser:       srvUser,
-		SrvOnboarding: srvOnboarding,
-		SrvUserRole:   srvUserRole,
-		SrvRole:       srvRole,
-		SrvLifeTest:   srvLifeTest,
+		SrvUser:              srvUser,
+		SrvOnboarding:        srvOnboarding,
+		SrvUserRole:          srvUserRole,
+		SrvRole:              srvRole,
+		SrvLifeTest:          srvLifeTest,
+		SrvOnboardingCheckId: srvOnboardingCheckId,
 	}
 }

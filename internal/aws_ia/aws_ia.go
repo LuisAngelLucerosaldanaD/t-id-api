@@ -96,8 +96,9 @@ func GetExtensionFromBytes(file []byte) string {
 		return ".jpeg"
 	case "image/tiff":
 		return ".tif"
+	default:
+		return ".jpeg"
 	}
-	return ".txt"
 }
 
 func sessionAws() (client.ConfigProvider, error) {
