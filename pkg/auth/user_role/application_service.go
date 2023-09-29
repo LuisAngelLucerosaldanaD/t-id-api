@@ -108,7 +108,7 @@ func (s *service) UpdateUseRoleByUserID(userId string, roleId string) (*UseRole,
 		UserId: userId,
 		RoleId: roleId,
 	}
-	if err := s.repository.update(m); err != nil {
+	if err := s.repository.updateRole(m); err != nil {
 		logger.Error.Println(s.txID, " - couldn't update UseRole :", err)
 		return m, 18, err
 	}

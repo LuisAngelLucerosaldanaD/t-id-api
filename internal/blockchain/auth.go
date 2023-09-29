@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"check-id-api/internal/logger"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -48,7 +47,7 @@ func GetToken(url, email, password string) string {
 		logger.Error.Printf("Error decodificando respuesta de peticion authentication en Timer: %v", err)
 		return token
 	}
-	token = fmt.Sprintf("Bearer %s", response.Data.AccessToken)
-	return token
+
+	return response.Data.AccessToken
 
 }

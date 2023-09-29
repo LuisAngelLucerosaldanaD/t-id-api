@@ -167,7 +167,7 @@ func CreateTransaction(user *user.User, nameTransaction, descriptionTransaction,
 		"identity_number": user.DocumentNumber,
 	}
 
-	rs, codeHTTP, err := ws.ConsumeWS(bodyRq, e.Blockchain.UrlApi, "POST", token, &headers)
+	rs, codeHTTP, err := ws.ConsumeWS(bodyRq, e.Blockchain.UrlApi, "POST", "Bearer "+token, &headers)
 	if err := json.Unmarshal(rs, &res); err != nil {
 		logger.Error.Println("don't bind response in struct", err)
 		return "", err

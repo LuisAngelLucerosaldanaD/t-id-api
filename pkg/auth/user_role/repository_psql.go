@@ -125,3 +125,18 @@ func (s *psql) getByUseID(id string) (*UseRole, error) {
 	}
 	return &mdl, nil
 }
+
+// Update actualiza un registro en la BD
+func (s *psql) updateRole(m *UseRole) error {
+	date := time.Now()
+	m.UpdatedAt = date
+	const psqlUpdate = `UPDATE auth.user_role SET role_id = :role_id, updated_at = :updated_at WHERE user_id = :user_id; `
+	rs, err := s.DB.NamedExec(psqlUpdate, &m)
+	if err != nil {
+		return err
+	}
+	if i, _ := rs.RowsAffected(); i == 0 {
+		return fmt.Errorf("ecatch:108")
+	}
+	return nil
+}
