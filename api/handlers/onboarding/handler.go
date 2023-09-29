@@ -224,7 +224,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 	}
 
 	if !resp {
-		_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de identidad", "error", "La validación de identidad fue rechazada", req.UserID)
+		_, code, err = srvTrx.SrvTraceability.CreateTraceability("Validación de identidad", "error", "La validación de identidad fue rechazada, el rostro en la selfie y el documento de identidad no coinciden", req.UserID)
 		if err != nil {
 			logger.Error.Printf("couldn't create traceability, error: %v", err)
 			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)

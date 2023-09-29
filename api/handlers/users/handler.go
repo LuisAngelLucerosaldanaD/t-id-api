@@ -100,7 +100,7 @@ func (h *handlerUser) createUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	newOnboarding, code, err := srvAuth.SrvOnboarding.CreateOnboarding(uuid.New().String(), 0, strconv.FormatInt(newRequestOnboarding.ID, 10), newUser.ID, "started", "")
+	newOnboarding, code, err := srvAuth.SrvOnboarding.CreateOnboarding(uuid.New().String(), 5, strconv.FormatInt(newRequestOnboarding.ID, 10), newUser.ID, "started", "")
 	if err != nil {
 		logger.Error.Printf("couldn't create onboarding, error: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)

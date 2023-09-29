@@ -9,7 +9,7 @@ import (
 // Onboarding  Model struct Onboarding
 type Onboarding struct {
 	ID            string    `json:"id" db:"id" valid:"required,uuid"`
-	ClientId      int64     `json:"client_id" db:"client_id" valid:"required"`
+	ClientId      int64     `json:"client_id" db:"client_id" valid:"-"`
 	RequestId     string    `json:"request_id" db:"request_id" valid:"required"`
 	UserId        string    `json:"user_id" db:"user_id" valid:"required"`
 	Status        string    `json:"status" db:"status" valid:"required"`

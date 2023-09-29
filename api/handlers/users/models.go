@@ -51,7 +51,6 @@ type reqUploadDocument struct {
 }
 
 type RequestCreateUser struct {
-	Id             string `json:"id"`
 	DocumentNumber string `json:"document_number"`
 	Email          string `json:"email"`
 	Password       string `json:"password"`
