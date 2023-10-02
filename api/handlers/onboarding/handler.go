@@ -331,7 +331,7 @@ func (h *handlerOnboarding) FinishOnboarding(c *fiber.Ctx) error {
 		ID:             user.ID,
 		Nickname:       user.Email,
 		Email:          user.Email,
-		Password:       strings.TrimSpace(strings.ToLower(basicData.FirstName) + user.DocumentNumber),
+		Password:       password.Encrypt(strings.TrimSpace(strings.ToLower(basicData.FirstName) + user.DocumentNumber)),
 		FirstName:      &basicData.FirstName,
 		SecondName:     &basicData.SecondName,
 		FirstSurname:   &basicData.Surname,
