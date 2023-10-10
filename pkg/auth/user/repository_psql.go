@@ -179,3 +179,17 @@ deleted_at, created_at, updated_at FROM auth.user WHERE document_number = $1 `
 	}
 	return &mdl, nil
 }
+
+func (s *psql) getByDniAndEmail(dni string, email string) (*User, error) {
+	const psqlGetByEmail = `SELECT id, nickname, email, password, first_name, second_name, first_surname, second_surname, age, type_document, document_number, cellphone, gender, nationality, country, department, city, real_ip, status_id, failed_attempts, block_date, disabled_date, last_login, last_change_password, birth_date, verified_code, is_deleted,
+deleted_at, created_at, updated_at FROM auth.user WHERE document_number = $1 or email = $2 limit 1`
+	mdl := User{}
+	err := s.DB.Get(&mdl, psqlGetByEmail, dni, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return &mdl, err
+	}
+	return &mdl, nil
+}

@@ -54,7 +54,7 @@ func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByEmail(req.Email)
+	user, code, err := srvAuth.SrvUser.GetUserByDNIAndEmail(req.DocumentNumber, req.Email)
 	if err != nil {
 		logger.Error.Printf("couldn't bind get user by email: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)

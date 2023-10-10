@@ -21,6 +21,7 @@ type ServicesUserRepository interface {
 	getNotStarted() ([]*User, error)
 	getNoUploadFile(fileType int) ([]*User, error)
 	getByIdentityNumber(identityNumber string) (*User, error)
+	getByDniAndEmail(dni string, email string) (*User, error)
 }
 
 func FactoryStorage(db *sqlx.DB, user *models.User, txID string) ServicesUserRepository {

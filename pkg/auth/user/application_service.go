@@ -18,6 +18,7 @@ type PortsServerUser interface {
 	GetAllNotStarted() ([]*User, error)
 	GetAllNotUploadFile(fileType int) ([]*User, error)
 	GetUserByIdentityNumber(identityNumber string) (*User, int, error)
+	GetUserByDNIAndEmail(dni string, email string) (*User, int, error)
 }
 
 type service struct {
@@ -120,6 +121,15 @@ func (s *service) GetUserByIdentityNumber(identityNumber string) (*User, int, er
 	m, err := s.repository.getByIdentityNumber(identityNumber)
 	if err != nil {
 		logger.Error.Println(s.txID, " - couldn`t getByIdentityNumber row:", err)
+		return nil, 22, err
+	}
+	return m, 29, nil
+}
+
+func (s *service) GetUserByDNIAndEmail(dni string, email string) (*User, int, error) {
+	m, err := s.repository.getByDniAndEmail(dni, email)
+	if err != nil {
+		logger.Error.Println(s.txID, " - couldn`t getByDniAndEmail row:", err)
 		return nil, 22, err
 	}
 	return m, 29, nil
