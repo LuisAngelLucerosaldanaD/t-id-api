@@ -205,15 +205,24 @@ func StringToHashSha256(value string) string {
 }
 
 func CipherDH(private ecdsa.PrivateKey, publicOtterKey ecdsa.PublicKey, message []byte) (string, error) {
-	curve := elliptic.P256()
-
-	sharedKeyX, _ := curve.ScalarMult(publicOtterKey.X, publicOtterKey.Y, private.D.Bytes())
-	o := openssl.New()
-
-	enc, err := o.EncryptBytes(sharedKeyX.String(), message, openssl.BytesToKeyMD5)
+	publicEcdh, err := publicOtterKey.ECDH()
+	if err != nil {
+		return "", err
+	}
+	privateEcdh, err := private.ECDH()
 	if err != nil {
 		return "", err
 	}
 
+	clave, err := privateEcdh.ECDH(publicEcdh)
+	if err != nil {
+		return "", err
+	}
+
+	o := openssl.New()
+	enc, err := o.EncryptBytes(fmt.Sprintf("%x", clave), message, openssl.BytesToKeyMD5)
+	if err != nil {
+		return "", err
+	}
 	return string(enc), nil
 }
