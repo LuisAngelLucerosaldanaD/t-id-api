@@ -47,3 +47,9 @@ type RequestValidationIdentity struct {
 	UserID       string `json:"user_id"`
 	ValidationId int64  `json:"validation_id"`
 }
+
+type ReqUploadSelfie struct {
+	Selfie       string `json:"selfie"`
+	Document     string `json:"document"`
+	OnboardingId string `json:"onboarding_id"`
+}

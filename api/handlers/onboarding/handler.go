@@ -5,6 +5,7 @@ import (
 	"check-id-api/internal/blockchain"
 	"check-id-api/internal/env"
 	"check-id-api/internal/logger"
+	"check-id-api/internal/middleware"
 	"check-id-api/internal/msg"
 	"check-id-api/internal/password"
 	"check-id-api/internal/persons"
@@ -677,6 +678,159 @@ func (h *handlerOnboarding) ValidateIdentity(c *fiber.Ctx) error {
 	if err != nil {
 		logger.Error.Printf("couldn't bind update validation request: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// RequestUploadSelfie godoc
+// @Summary Método que permite solicitar la corrección de la selfie y el documento de identidad
+// @Description Método que permite solicitar la corrección de la selfie y el documento de identidad
+// @tags Onboarding
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
+// @Success 200 {object} ResProcessOnboarding
+// @Router /api/v1/onboarding/selfie-correction [get]
+func (h *handlerOnboarding) RequestUploadSelfie(c *fiber.Ctx) error {
+	res := ResProcessOnboarding{Error: true}
+	e := env.NewConfiguration()
+
+	user, err := middleware.GetUser(c)
+	if err != nil {
+		logger.Error.Printf("couldn't get user of the token claims: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(94, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	srvAuth := auth.NewServerAuth(h.DB, user, h.TxID)
+
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
+	if err != nil {
+		logger.Error.Printf("couldn't get onboarding by user id: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding.Status != "life-test-refused" {
+		res.Code, res.Type, res.Msg = msg.GetByCode(96, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	res.Data = e.OnlyOne.Url + e.OnlyOne.Onboarding + fmt.Sprintf("?process=selfie_correction&onboarding_id=%s&email=%s", onboarding.ID, user.Email)
+	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
+	res.Error = false
+	return c.Status(http.StatusOK).JSON(res)
+}
+
+// UploadSelfie godoc
+// @Summary Método que permite cargar la selfie y/o el documento de identidad
+// @Description Método que permite cargar la selfie y/o el documento de identidad
+// @tags Onboarding
+// @Accept json
+// @Produce json
+// @Param ReqUploadSelfie body ReqUploadSelfie true "Datos para la corrección de la prueba de vida"
+// @Success 200 {object} ResProcessOnboarding
+// @Router /api/v1/onboarding/selfie-correction [post]
+func (h *handlerOnboarding) UploadSelfie(c *fiber.Ctx) error {
+	res := ResProcessOnboarding{Error: true}
+	req := ReqUploadSelfie{}
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		logger.Error.Printf("couldn't parser body request: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if req.Selfie == "" && req.Document == "" {
+		res.Code, res.Type, res.Msg = msg.GetByCode(1, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	srvAuth := auth.NewServerAuth(h.DB, nil, h.TxID)
+	srvCfg := cfg.NewServerCfg(h.DB, nil, h.TxID)
+	srvTrx := trx.NewServerTrx(h.DB, nil, h.TxID)
+
+	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByID(req.OnboardingId)
+	if err != nil {
+		logger.Error.Printf("couldn't get onboarding by id: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding == nil {
+		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if onboarding.Status != "life-test-refused" {
+		res.Code, res.Type, res.Msg = msg.GetByCode(96, h.DB, h.TxID)
+		return c.Status(http.StatusAccepted).JSON(res)
+	}
+
+	if req.Selfie != "" {
+		f, err := srvCfg.SrvFilesS3.UploadFile(onboarding.UserId, onboarding.UserId+"_selfie.jpg", req.Selfie)
+		if err != nil {
+			logger.Error.Printf("couldn't upload file s3: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 1, onboarding.UserId)
+		if err != nil {
+			logger.Error.Printf("couldn't create selfie image, error: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			res.Msg = err.Error()
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		_, code, err = srvTrx.SrvTraceability.CreateTraceability("Actualización de datos", "info", "Corrección de la foto de perfil", onboarding.UserId)
+		if err != nil {
+			logger.Error.Printf("couldn't create traceability, error: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+	}
+
+	if req.Document != "" {
+		f, err := srvCfg.SrvFilesS3.UploadFile(onboarding.UserId, onboarding.UserId+"_doc_front.jpg", req.Document)
+		if err != nil {
+			logger.Error.Printf("couldn't upload file s3: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(3, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		_, code, err = srvCfg.SrvFiles.CreateFile(f.Path, f.FileName, 2, onboarding.UserId)
+		if err != nil {
+			logger.Error.Printf("couldn't create document front image, error: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			res.Msg = err.Error()
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+
+		_, code, err = srvTrx.SrvTraceability.CreateTraceability("Actualización de datos", "info", "Corrección de la parte frontal documento de identidad", onboarding.UserId)
+		if err != nil {
+			logger.Error.Printf("couldn't create traceability, error: %v", err)
+			res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+			return c.Status(http.StatusAccepted).JSON(res)
+		}
+	}
+
+	_, code, err = srvAuth.SrvOnboarding.UpdateOnboarding(onboarding.ID, onboarding.ClientId, onboarding.RequestId, onboarding.UserId, "life-test", onboarding.TransactionId)
+	if err != nil {
+		logger.Error.Printf("couldn't update onboarding, error: %v", err)
+		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
+		res.Msg = err.Error()
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 

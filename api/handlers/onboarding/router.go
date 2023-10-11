@@ -14,4 +14,6 @@ func RouterOnboarding(app *fiber.App, db *sqlx.DB, txID string) {
 	onboarding.Post("/", middleware.JWTProtected(), h.Onboarding)
 	onboarding.Post("/process", h.FinishOnboarding)
 	onboarding.Post("/validate_identity", h.ValidateIdentity)
+	onboarding.Post("/selfie-correction", h.UploadSelfie)
+	onboarding.Get("/selfie-correction", h.RequestUploadSelfie)
 }

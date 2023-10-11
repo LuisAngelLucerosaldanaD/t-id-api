@@ -303,5 +303,8 @@ VALUES (94, 'No se pudo obtener los datos del usuario embebidos en el token',
 INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at)
 VALUES (95, 'El usuario no tiene roles asignados', 'El usuario no tiene roles asignados', '1',
         CAST('2020-08-12 12:15:36.053' AS TIMESTAMP), CAST('2020-08-12 12:15:36.053' AS TIMESTAMP));
-
+INSERT INTO cfg.messages (id, spa, eng, type_message, created_at, updated_at)
+VALUES (96, 'El usuario no esta autorizado para cargar la selfie',
+        'El usuario no esta autorizado para cargar la selfie', '1',
+        CAST('2020-08-12 12:15:36.053' AS TIMESTAMP), CAST('2020-08-12 12:15:36.053' AS TIMESTAMP));
 -- +migrate Down

@@ -137,26 +137,26 @@ func (h *handlerUser) Login(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByEmail(req.Email)
+	userFound, code, err := srvAuth.SrvUser.GetUserByEmail(req.Email)
 	if err != nil {
-		logger.Error.Printf("couldn't get user by email: %v", err)
+		logger.Error.Printf("couldn't get userFound by email: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if user == nil {
+	if userFound == nil {
 		res.Code, res.Type, res.Msg = msg.GetByCode(10, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if !password.Compare(user.ID, user.Password, req.Password) {
+	if !password.Compare(userFound.ID, userFound.Password, req.Password) {
 		res.Code, res.Type, res.Msg = msg.GetByCode(10, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	userRole, code, err := srvAuth.SrvUserRole.GetUseRoleByUserID(user.ID)
+	userRole, code, err := srvAuth.SrvUserRole.GetUseRoleByUserID(userFound.ID)
 	if err != nil {
-		logger.Error.Printf("couldn't get user role: %v", err)
+		logger.Error.Printf("couldn't get userFound role: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
@@ -178,12 +178,12 @@ func (h *handlerUser) Login(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user.RealIp = c.IP()
-	user.Password = ""
+	userFound.RealIp = c.IP()
+	userFound.Password = ""
 
-	token, code, err := jwt.GenerateJWT((*models.User)(user), role.Name)
+	token, code, err := jwt.GenerateJWT((*models.User)(userFound), role.Name)
 	if err != nil {
-		logger.Error.Printf("couldn't generate user: %v", err)
+		logger.Error.Printf("couldn't generate userFound: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(10, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
@@ -390,7 +390,7 @@ func (h *handlerUser) getUserById(c *fiber.Ctx) error {
 	}
 
 	if role == nil {
-		logger.Error.Printf("El usuario no tiene un rol asigando")
+		logger.Error.Printf("El usuario no tiene un rol asignado")
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
@@ -510,37 +510,37 @@ func (h *handlerUser) validateUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
+	userFound, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if user == nil {
+	if userFound == nil {
 		res.Code, res.Type, res.Msg = 5, 1, "No existe un usuario registrado con la información proporcionada"
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if user == nil {
+	if userFound == nil {
 		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
+	onboardingUser, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(userFound.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo consultar la validacion de identidad, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if onboarding == nil {
+	if onboardingUser == nil {
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = onboarding.TransactionId != ""
+	res.Data = onboardingUser.TransactionId != ""
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
@@ -566,33 +566,33 @@ func (h *handlerUser) getFinishOnboarding(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
+	userFound, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if user == nil {
+	if userFound == nil {
 		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	onboarding, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(user.ID)
+	onboardingUser, code, err := srvAuth.SrvOnboarding.GetOnboardingByUserID(userFound.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el registro de enrolamiento del usuario: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if onboarding == nil {
+	if onboardingUser == nil {
 		logger.Error.Printf("No se pudo obtener el registro de enrolamiento del usuario")
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	res.Data = onboarding.Status == "finished"
+	res.Data = onboardingUser.Status == "finished"
 	res.Code, res.Type, res.Msg = msg.GetByCode(29, h.DB, h.TxID)
 	res.Error = false
 	return c.Status(http.StatusOK).JSON(res)
@@ -618,20 +618,20 @@ func (h *handlerUser) getFinishValidationIdentity(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
+	userFound, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if user == nil {
+	if userFound == nil {
 		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	lifeTest, code, err := srvAuth.SrvLifeTest.GetLifeTestByUserID(user.ID)
+	lifeTest, code, err := srvAuth.SrvLifeTest.GetLifeTestByUserID(userFound.ID)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el registro de validación de identidad del usuario: %v", err)
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
@@ -679,14 +679,14 @@ func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	user, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
+	userFound, code, err := srvAuth.SrvUser.GetUserByIdentityNumber(userToken.DocumentNumber)
 	if err != nil {
 		logger.Error.Printf("No se pudo obtener el usuario por su identificacion, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if user == nil {
+	if userFound == nil {
 		logger.Error.Printf("Usuario no encontrado, error: %s", err.Error())
 		res.Code, res.Type, res.Msg = msg.GetByCode(code, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)
@@ -705,7 +705,7 @@ func (h *handlerUser) getUserFile(c *fiber.Ctx) error {
 		return c.Status(http.StatusAccepted).JSON(res)
 	}
 
-	if file.UserId != user.ID {
+	if file.UserId != userFound.ID {
 		logger.Error.Printf("No esta autorizado para ver este recurso")
 		res.Code, res.Type, res.Msg = msg.GetByCode(22, h.DB, h.TxID)
 		return c.Status(http.StatusAccepted).JSON(res)

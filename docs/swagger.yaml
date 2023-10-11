@@ -53,6 +53,15 @@ definitions:
       type:
         type: integer
     type: object
+  onboarding.ReqUploadSelfie:
+    properties:
+      document:
+        type: string
+      onboarding_id:
+        type: string
+      selfie:
+        type: string
+    type: object
   onboarding.RequestProcessOnboarding:
     properties:
       document_back:
@@ -140,8 +149,6 @@ definitions:
         type: string
       email:
         type: string
-      id:
-        type: string
       password:
         type: string
     type: object
@@ -182,6 +189,8 @@ definitions:
     properties:
       age:
         type: integer
+      back_document_img:
+        type: string
       birth_date:
         type: string
       block_date:
@@ -210,6 +219,8 @@ definitions:
         type: string
       first_surname:
         type: string
+      front_document_img:
+        type: string
       gender:
         type: string
       id:
@@ -224,14 +235,20 @@ definitions:
         type: string
       nickname:
         type: string
+      process_url:
+        type: string
       real_ip:
         type: string
       second_name:
         type: string
       second_surname:
         type: string
+      selfie_img:
+        type: string
       status_id:
         type: integer
+      transaction_id:
+        type: string
       type_document:
         type: string
       updated_at:
@@ -417,12 +434,6 @@ paths:
       description: Método que permite terminar el enrolamiento de un usuario que ha
         sido validado desde OnlyOne
       parameters:
-      - default: Bearer <Add access token here>
-        description: Authorization
-        in: header
-        name: Authorization
-        required: true
-        type: string
       - description: Datos para validar el enrolamiento del usuario
         in: body
         name: RequestProcessOnboarding
@@ -437,6 +448,51 @@ paths:
           schema:
             $ref: '#/definitions/onboarding.ResProcessOnboarding'
       summary: Método que permite terminar el enrolamiento de un usuario
+      tags:
+      - Onboarding
+  /api/v1/onboarding/selfie-correction:
+    get:
+      consumes:
+      - application/json
+      description: Método que permite solicitar la corrección de la selfie y el documento
+        de identidad
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/onboarding.ResProcessOnboarding'
+      summary: Método que permite solicitar la corrección de la selfie y el documento
+        de identidad
+      tags:
+      - Onboarding
+    post:
+      consumes:
+      - application/json
+      description: Método que permite cargar la selfie y/o el documento de identidad
+      parameters:
+      - description: Datos para la corrección de la prueba de vida
+        in: body
+        name: ReqUploadSelfie
+        required: true
+        schema:
+          $ref: '#/definitions/onboarding.ReqUploadSelfie'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/onboarding.ResProcessOnboarding'
+      summary: Método que permite cargar la selfie y/o el documento de identidad
       tags:
       - Onboarding
   /api/v1/onboarding/validate_identity:

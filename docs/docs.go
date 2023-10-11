@@ -163,20 +163,77 @@ const docTemplate = `{
                 "summary": "Método que permite terminar el enrolamiento de un usuario",
                 "parameters": [
                     {
-                        "type": "string",
-                        "default": "Bearer \u003cAdd access token here\u003e",
-                        "description": "Authorization",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
                         "description": "Datos para validar el enrolamiento del usuario",
                         "name": "RequestProcessOnboarding",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/onboarding.RequestProcessOnboarding"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/onboarding.ResProcessOnboarding"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/onboarding/selfie-correction": {
+            "get": {
+                "description": "Método que permite solicitar la corrección de la selfie y el documento de identidad",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Método que permite solicitar la corrección de la selfie y el documento de identidad",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/onboarding.ResProcessOnboarding"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Método que permite cargar la selfie y/o el documento de identidad",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Método que permite cargar la selfie y/o el documento de identidad",
+                "parameters": [
+                    {
+                        "description": "Datos para la corrección de la prueba de vida",
+                        "name": "ReqUploadSelfie",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/onboarding.ReqUploadSelfie"
                         }
                     }
                 ],
@@ -672,6 +729,20 @@ const docTemplate = `{
                 }
             }
         },
+        "onboarding.ReqUploadSelfie": {
+            "type": "object",
+            "properties": {
+                "document": {
+                    "type": "string"
+                },
+                "onboarding_id": {
+                    "type": "string"
+                },
+                "selfie": {
+                    "type": "string"
+                }
+            }
+        },
         "onboarding.RequestProcessOnboarding": {
             "type": "object",
             "properties": {
@@ -805,9 +876,6 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "string"
-                },
                 "password": {
                     "type": "string"
                 }
@@ -870,6 +938,9 @@ const docTemplate = `{
                 "age": {
                     "type": "integer"
                 },
+                "back_document_img": {
+                    "type": "string"
+                },
                 "birth_date": {
                     "type": "string"
                 },
@@ -912,6 +983,9 @@ const docTemplate = `{
                 "first_surname": {
                     "type": "string"
                 },
+                "front_document_img": {
+                    "type": "string"
+                },
                 "gender": {
                     "type": "string"
                 },
@@ -933,6 +1007,9 @@ const docTemplate = `{
                 "nickname": {
                     "type": "string"
                 },
+                "process_url": {
+                    "type": "string"
+                },
                 "real_ip": {
                     "type": "string"
                 },
@@ -942,8 +1019,14 @@ const docTemplate = `{
                 "second_surname": {
                     "type": "string"
                 },
+                "selfie_img": {
+                    "type": "string"
+                },
                 "status_id": {
                     "type": "integer"
+                },
+                "transaction_id": {
+                    "type": "string"
                 },
                 "type_document": {
                     "type": "string"
@@ -1101,6 +1184,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Api para OnBoarding y validación de identidad",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
