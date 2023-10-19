@@ -38,7 +38,7 @@ type handlerOnboarding struct {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authorization" default(Bearer <Add access token here>)
-// @Param resCreateOnboarding body resCreateOnboarding true "Datos para el enrolamiento del usuario"
+// @Param requestCreateOnboarding body requestCreateOnboarding true "Datos para el enrolamiento del usuario"
 // @Success 200 {object} resCreateOnboarding
 // @Router /api/v1/onboarding/ [post]
 func (h *handlerOnboarding) Onboarding(c *fiber.Ctx) error {

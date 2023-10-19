@@ -130,11 +130,11 @@ const docTemplate = `{
                     },
                     {
                         "description": "Datos para el enrolamiento del usuario",
-                        "name": "resCreateOnboarding",
+                        "name": "requestCreateOnboarding",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/onboarding.resCreateOnboarding"
+                            "$ref": "#/definitions/onboarding.requestCreateOnboarding"
                         }
                     }
                 ],
@@ -795,6 +795,41 @@ const docTemplate = `{
                 }
             }
         },
+        "onboarding.requestCreateOnboarding": {
+            "type": "object",
+            "properties": {
+                "cellphone": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "integer"
+                },
+                "document_number": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "first_surname": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "second_name": {
+                    "type": "string"
+                },
+                "second_surname": {
+                    "type": "string"
+                }
+            }
+        },
         "onboarding.resCreateOnboarding": {
             "type": "object",
             "properties": {
@@ -1184,8 +1219,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Api para OnBoarding y validación de identidad",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {

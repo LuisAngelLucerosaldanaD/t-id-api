@@ -96,6 +96,29 @@ definitions:
       type:
         type: integer
     type: object
+  onboarding.requestCreateOnboarding:
+    properties:
+      cellphone:
+        type: string
+      client_id:
+        type: integer
+      document_number:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      first_surname:
+        type: string
+      nationality:
+        type: string
+      request_id:
+        type: string
+      second_name:
+        type: string
+      second_surname:
+        type: string
+    type: object
   onboarding.resCreateOnboarding:
     properties:
       code:
@@ -413,10 +436,10 @@ paths:
         type: string
       - description: Datos para el enrolamiento del usuario
         in: body
-        name: resCreateOnboarding
+        name: requestCreateOnboarding
         required: true
         schema:
-          $ref: '#/definitions/onboarding.resCreateOnboarding'
+          $ref: '#/definitions/onboarding.requestCreateOnboarding'
       produces:
       - application/json
       responses:

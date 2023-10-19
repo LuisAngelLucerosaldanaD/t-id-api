@@ -123,11 +123,11 @@
                     },
                     {
                         "description": "Datos para el enrolamiento del usuario",
-                        "name": "resCreateOnboarding",
+                        "name": "requestCreateOnboarding",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/onboarding.resCreateOnboarding"
+                            "$ref": "#/definitions/onboarding.requestCreateOnboarding"
                         }
                     }
                 ],
@@ -785,6 +785,41 @@
                 },
                 "type": {
                     "type": "integer"
+                }
+            }
+        },
+        "onboarding.requestCreateOnboarding": {
+            "type": "object",
+            "properties": {
+                "cellphone": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "integer"
+                },
+                "document_number": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "first_surname": {
+                    "type": "string"
+                },
+                "nationality": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "second_name": {
+                    "type": "string"
+                },
+                "second_surname": {
+                    "type": "string"
                 }
             }
         },
