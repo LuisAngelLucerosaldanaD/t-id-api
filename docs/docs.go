@@ -1307,8 +1307,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Api para OnBoarding y validación de identidad",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {

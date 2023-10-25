@@ -142,7 +142,7 @@ func CreateTransaction(user *user.User, nameTransaction, descriptionTransaction,
 	transactionRq := Transaction{
 		From:   e.Blockchain.Wallet,
 		To:     to,
-		TypeId: 18,
+		TypeId: 19,
 		Amount: 1,
 		Files:  []*File{},
 		Data:   cryptoMessage,
