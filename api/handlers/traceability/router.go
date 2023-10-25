@@ -12,4 +12,5 @@ func RouterTraceability(app *fiber.App, db *sqlx.DB, txID string) {
 	v1 := api.Group("/v1")
 	tracking := v1.Group("/traceability")
 	tracking.Get("/", middleware.JWTProtected(), h.getTraceability)
+	tracking.Get("/life-test", middleware.JWTProtected(), h.getTraceabilityLifeTest)
 }

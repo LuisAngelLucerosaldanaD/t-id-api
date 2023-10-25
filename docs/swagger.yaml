@@ -53,6 +53,27 @@ definitions:
       type:
         type: integer
     type: object
+  life_test.LifeTest:
+    properties:
+      client_id:
+        type: integer
+      created_at:
+        type: string
+      expired_at:
+        type: string
+      id:
+        type: integer
+      max_num_test:
+        type: integer
+      request_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   onboarding.ReqUploadSelfie:
     properties:
       document:
@@ -125,6 +146,21 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/check-id-api_api_handlers_onboarding.Onboarding'
+      error:
+        type: boolean
+      msg:
+        type: string
+      type:
+        type: integer
+    type: object
+  traceability.ResTrxLifeTest:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/life_test.LifeTest'
+        type: array
       error:
         type: boolean
       msg:
@@ -568,6 +604,30 @@ paths:
           schema:
             $ref: '#/definitions/traceability.resTraceability'
       summary: Obtención de los datos de trazabilidad de un usuario por su id
+      tags:
+      - Traceability
+  /api/v1/traceability/life-test:
+    get:
+      consumes:
+      - application/json
+      description: Obtención del historial de validaciones de identidad de un usuario
+        por su id
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/traceability.ResTrxLifeTest'
+      summary: Obtención del historial de validaciones de identidad de un usuario
+        por su id
       tags:
       - Traceability
   /api/v1/user:
